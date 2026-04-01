@@ -54,6 +54,12 @@ class MemberProfileActions {
     _ref.invalidate(memberProfileProvider);
     _ref.invalidate(memberDashboardProvider); // Refresh dashboard too as name might impact it
   }
+
+  Future<void> markSelfAttendance(String imageBase64) async {
+    await _repo.markSelfAttendance(imageBase64);
+    _ref.invalidate(memberDashboardProvider); // Refresh stats
+    _ref.invalidate(memberAttendanceProvider); // Refresh logs
+  }
 }
 
 // Fees & Payment Status

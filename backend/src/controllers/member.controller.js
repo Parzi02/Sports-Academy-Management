@@ -37,7 +37,15 @@ exports.getDashboard = async (req, res) => {
             venue: 'Academy Training Ground'
         }] : [];
 
+        // Check if attendance is already marked today
+        const todayAttendanceRes = await db.query(
+            'SELECT COUNT(*) FROM attendance WHERE member_id = $1 AND date = CURRENT_DATE',
+            [req.user.id]
+        );
+        const isAttendanceMarkedToday = parseInt(todayAttendanceRes.rows[0].count) > 0;
+
         res.json({
+            isAttendanceMarkedToday: isAttendanceMarkedToday,
             attendancePercentage: attendancePercentage.toFixed(2),
             attendedSessions: present,
             totalSessions: total,
@@ -52,6 +60,43 @@ exports.getDashboard = async (req, res) => {
     } catch (error) {
         console.error('Failed to fetch dashboard:', error);
         res.status(500).json({ error: 'Failed to fetch dashboard' });
+    }
+};
+
+// Mark Self Attendance
+exports.markSelfAttendance = async (req, res) => {
+    const { imageBase64 } = req.body;
+    
+    if (!imageBase64) {
+        return res.status(400).json({ error: 'A selfie is required to mark attendance' });
+    }
+
+    try {
+        // 1. Get the member's active batch
+        const enrollmentRes = await db.query(
+            'SELECT batch_id FROM enrollments WHERE member_id = $1 LIMIT 1',
+            [req.user.id]
+        );
+
+        if (enrollmentRes.rows.length === 0) {
+            return res.status(404).json({ error: 'No active enrollment found to mark attendance' });
+        }
+
+        const batchId = enrollmentRes.rows[0].batch_id;
+
+        // 2. Insert or update attendance for today
+        await db.query(
+            `INSERT INTO attendance (member_id, batch_id, date, status, marked_by, selfie_base64) 
+             VALUES ($1, $2, CURRENT_DATE, 'present', $1, $3) 
+             ON CONFLICT (member_id, batch_id, date) 
+             DO UPDATE SET status = 'present', marked_at = CURRENT_TIMESTAMP, selfie_base64 = EXCLUDED.selfie_base64`,
+            [req.user.id, batchId, imageBase64]
+        );
+
+        res.json({ message: 'Attendance marked successfully' });
+    } catch (error) {
+        console.error('Failed to mark self attendance:', error);
+        res.status(500).json({ error: 'Failed to mark attendance' });
     }
 };
 

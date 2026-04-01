@@ -46,6 +46,10 @@ class MemberRepository {
     });
   }
 
+  Future<void> markSelfAttendance(String imageBase64) async {
+    await _client.post('/member/attendance/mark', {'imageBase64': imageBase64});
+  }
+
   Future<MemberProfile> updateProfile(Map<String, dynamic> data) async {
     final response = await _client.put('/member/profile', data);
     return MemberProfile.fromJson(response.data);

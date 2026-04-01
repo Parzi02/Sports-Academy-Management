@@ -8,9 +8,11 @@ class MemberDashboardData {
   final String batchTime;
   final String sport;
   final String coachName;
+  final bool isAttendanceMarkedToday;
   final List<TodaySchedule>? todaySchedule;
 
   MemberDashboardData({
+    required this.isAttendanceMarkedToday,
     required this.attendancePercentage,
     required this.attendedSessions,
     required this.totalSessions,
@@ -25,6 +27,7 @@ class MemberDashboardData {
 
   factory MemberDashboardData.fromJson(Map<String, dynamic> json) {
     return MemberDashboardData(
+      isAttendanceMarkedToday: json['isAttendanceMarkedToday'] ?? false,
       attendancePercentage: json['attendancePercentage']?.toString() ?? '0.00',
       attendedSessions: json['attendedSessions'] ?? 0,
       totalSessions: json['totalSessions'] ?? 0,

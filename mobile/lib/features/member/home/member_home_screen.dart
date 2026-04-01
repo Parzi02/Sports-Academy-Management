@@ -2,10 +2,94 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_camera_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/member_providers.dart';
 import '../models/member_models.dart';
+
+// ...rest of the file until the end...
+
+class _SelfAttendanceButton extends ConsumerStatefulWidget {
+  const _SelfAttendanceButton();
+
+  @override
+  ConsumerState<_SelfAttendanceButton> createState() => _SelfAttendanceButtonState();
+}
+
+class _SelfAttendanceButtonState extends ConsumerState<_SelfAttendanceButton> {
+  bool _isLoading = false;
+
+  Future<void> _markAttendance() async {
+    final File? pickedFile = await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CustomCameraScreen()),
+    );
+
+    if (pickedFile == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final file = pickedFile;
+      final bytes = await file.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      await ref.read(memberProfileActionsProvider).markSelfAttendance(base64Image);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Attendance marked successfully!'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to mark attendance: $e'), backgroundColor: AppColors.alert),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dashboardState = ref.watch(memberDashboardProvider);
+    final isMarked = dashboardState.value?.isAttendanceMarkedToday ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Material(
+        color: isMarked ? AppColors.success : AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: (_isLoading || isMarked) ? null : _markAttendance,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            width: double.infinity,
+            child: _isLoading
+                ? const Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)))
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(isMarked ? Icons.check_circle_outline : Icons.camera_alt_outlined, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        isMarked ? "Attendance Marked" : "Mark Today's Attendance",
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class MemberHomeScreen extends ConsumerWidget {
   const MemberHomeScreen({super.key});
@@ -95,6 +179,11 @@ class MemberHomeScreen extends ConsumerWidget {
                   error: (e, __) => Text('Error: $e'),
                 ),
               ),
+            ),
+            
+            // Self Attendance Section
+            const SliverToBoxAdapter(
+              child: _SelfAttendanceButton(),
             ),
             
             // Today's Schedule Section
