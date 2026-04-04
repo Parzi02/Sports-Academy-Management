@@ -5,8 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 
 class PhoneEntryScreen extends ConsumerStatefulWidget {
-  final String role;
-  const PhoneEntryScreen({super.key, required this.role});
+  const PhoneEntryScreen({super.key});
 
   @override
   ConsumerState<PhoneEntryScreen> createState() => _PhoneEntryScreenState();
@@ -34,7 +33,6 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
       if (mounted) {
         context.push('/auth/otp', extra: {
           'phone': '91${_controller.text}',
-          'role': widget.role,
           'sessionId': response.data['sessionId'],
         });
       }

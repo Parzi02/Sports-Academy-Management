@@ -1,7 +1,8 @@
 const db = require('../config/db');
+const logger = require('../config/logger');
 
 // Member Dashboard
-exports.getDashboard = async (req, res) => {
+exports.getDashboard = async (req, res, next) => {
     try {
         // Attendance %
         const attendanceCountRes = await db.query(
@@ -68,17 +69,18 @@ exports.getDashboard = async (req, res) => {
             todaySchedule: todaySchedule
         });
     } catch (error) {
-        console.error('Failed to fetch dashboard:', error);
-        res.status(500).json({ error: 'Failed to fetch dashboard' });
+        next(error);
     }
 };
 
 // Mark Self Attendance
-exports.markSelfAttendance = async (req, res) => {
+exports.markSelfAttendance = async (req, res, next) => {
     const { imageBase64 } = req.body;
     
     if (!imageBase64) {
-        return res.status(400).json({ error: 'A selfie is required to mark attendance' });
+        const error = new Error('A selfie is required to mark attendance');
+        error.statusCode = 400;
+        return next(error);
     }
 
     try {
@@ -89,7 +91,9 @@ exports.markSelfAttendance = async (req, res) => {
         );
 
         if (enrollmentRes.rows.length === 0) {
-            return res.status(404).json({ error: 'No active enrollment found to mark attendance' });
+            const error = new Error('No active enrollment found to mark attendance');
+            error.statusCode = 404;
+            return next(error);
         }
 
         const batchId = enrollmentRes.rows[0].batch_id;
@@ -105,13 +109,12 @@ exports.markSelfAttendance = async (req, res) => {
 
         res.json({ message: 'Attendance marked successfully' });
     } catch (error) {
-        console.error('Failed to mark self attendance:', error);
-        res.status(500).json({ error: 'Failed to mark attendance' });
+        next(error);
     }
 };
 
 // Attendance Logs
-exports.getAttendanceLogs = async (req, res) => {
+exports.getAttendanceLogs = async (req, res, next) => {
     try {
         const result = await db.query(
             'SELECT date, status FROM attendance WHERE member_id = $1 ORDER BY date DESC',
@@ -119,12 +122,12 @@ exports.getAttendanceLogs = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch attendance logs' });
+        next(error);
     }
 };
 
 // Events
-exports.getEvents = async (req, res) => {
+exports.getEvents = async (req, res, next) => {
     try {
         const result = await db.query(
             'SELECT id, title, sport_category, event_category, date, venue, status FROM events WHERE branch_id = $1 ORDER BY date DESC',
@@ -132,11 +135,11 @@ exports.getEvents = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch events' });
+        next(error);
     }
 };
 
-exports.toggleFavourite = async (req, res) => {
+exports.toggleFavourite = async (req, res, next) => {
     const { eventId } = req.params;
     try {
         const check = await db.query(
@@ -152,12 +155,12 @@ exports.toggleFavourite = async (req, res) => {
             res.json({ isFavourite: true });
         }
     } catch (error) {
-        res.status(500).json({ error: 'Failed to toggle favourite' });
+        next(error);
     }
 };
 
 // Fees & Payments
-exports.recordPayment = async (req, res) => {
+exports.recordPayment = async (req, res, next) => {
     const { amount, paymentMethod, upiTransactionId } = req.body;
     try {
         await db.query('BEGIN');
@@ -179,12 +182,12 @@ exports.recordPayment = async (req, res) => {
         res.json({ message: 'Payment recorded successfully' });
     } catch (error) {
         await db.query('ROLLBACK');
-        res.status(500).json({ error: 'Failed to record payment' });
+        next(error);
     }
 };
 
 // Profile
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
     try {
         const query = `
             SELECT u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
@@ -196,28 +199,21 @@ exports.getProfile = async (req, res) => {
             WHERE u.id = $1
         `;
         const result = await db.query(query, [req.user.id]);
+        if (result.rows.length === 0) {
+            const error = new Error('Profile not found');
+            error.statusCode = 404;
+            throw error;
+        }
         res.json(result.rows[0]);
     } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        next(error);
     }
 };
 
 // Update Profile
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
     const { name, phone, address, profilePhotoBase64 } = req.body;
     try {
-        const query = `
-            UPDATE users 
-            SET name = COALESCE($1, name),
-                phone = COALESCE($2, phone),
-                address = COALESCE($3, address),
-                profile_photo_base64 = COALESCE($4, profile_photo_base_64)
-            WHERE id = $5
-            RETURNING *
-        `;
-        // Wait, I should use snake_case for columns like profile_photo_base64
-        // Let's re-verify the column name. It was profile_photo_base64 in select.
         const updateQuery = `
             UPDATE users 
             SET name = $1,
@@ -242,7 +238,7 @@ exports.updateProfile = async (req, res) => {
         const result = await db.query(profileQuery, [req.user.id]);
         res.json(result.rows[0]);
     } catch (error) {
-        console.error('Failed to update profile:', error);
-        res.status(500).json({ error: 'Failed to update profile' });
+        next(error);
     }
 };
+

@@ -1,18 +1,17 @@
 const db = require('../config/db');
+const logger = require('../config/logger');
 
 // Member: Submit Payment Proof
-exports.submitPayment = async (req, res) => {
+exports.submitPayment = async (req, res, next) => {
     const { amount, planType, utrNumber, screenshotBase64 } = req.body;
     
-    if (!amount || !planType || !utrNumber || !screenshotBase64) {
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
     try {
         // Check for duplicate UTR
         const checkUtr = await db.query('SELECT id FROM payments WHERE utr_number = $1', [utrNumber]);
         if (checkUtr.rows.length > 0) {
-            return res.status(400).json({ error: 'Duplicate Submission: This UTR is already recorded.' });
+            const error = new Error('Duplicate Submission: This UTR is already recorded.');
+            error.statusCode = 400;
+            throw error;
         }
 
         // Insert new payment with pending status
@@ -30,13 +29,12 @@ exports.submitPayment = async (req, res) => {
             payment: result.rows[0]
         });
     } catch (error) {
-        console.error('Failed to submit payment:', error);
-        res.status(500).json({ error: 'Failed to submit payment verification' });
+        next(error);
     }
 };
 
 // Member: Get Payment History
-exports.getPaymentHistory = async (req, res) => {
+exports.getPaymentHistory = async (req, res, next) => {
     try {
         const query = `
             SELECT id, amount, plan_type, utr_number, status, created_at 
@@ -47,71 +45,75 @@ exports.getPaymentHistory = async (req, res) => {
         const result = await db.query(query, [req.user.id]);
         res.json(result.rows);
     } catch (error) {
-        console.error('Failed to fetch payment history:', error);
-        res.status(500).json({ error: 'Failed to fetch history' });
+        next(error);
     }
 };
 
 // Admin: Get Pending Payments
-exports.getPendingPayments = async (req, res) => {
+exports.getPendingPayments = async (req, res, next) => {
     try {
         const query = `
             SELECT p.id, p.amount, p.plan_type, p.utr_number, p.status, p.created_at, p.screenshot_base64,
                    u.name as member_name, u.phone as member_phone, u.member_id as member_sid
             FROM payments p
             JOIN users u ON p.member_id = u.id
-            WHERE p.status = 'pending'
+            WHERE p.status = 'pending' AND u.branch_id = $1
             ORDER BY p.created_at ASC
         `;
-        // Assuming admin can see all for their branch or globally. 
-        // Admin might have req.branchId. We will assume global for academy unless filtered.
-        const result = await db.query(query);
+        const result = await db.query(query, [req.branchId]);
         res.json(result.rows);
     } catch (error) {
-        console.error('Failed to fetch pending payments:', error);
-        res.status(500).json({ error: 'Failed to fetch pending payments' });
+        next(error);
     }
 };
 
 // Admin: Approve or Reject a payment
-exports.updatePaymentStatus = async (req, res) => {
+exports.updatePaymentStatus = async (req, res, next) => {
     const { id } = req.params;
     const { status } = req.body; // 'approved' or 'rejected'
 
     if (!['approved', 'rejected'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
+        const error = new Error('Invalid status');
+        error.statusCode = 400;
+        return next(error);
     }
 
     try {
         await db.query('BEGIN');
 
-        // Update payment status
+        // Update payment status (security check: ensure the payment belongs to a user in the admin's branch)
+        const checkQuery = `
+            SELECT p.member_id, p.plan_type 
+            FROM payments p
+            JOIN users u ON p.member_id = u.id
+            WHERE p.id = $1 AND u.branch_id = $2
+        `;
+        const checkRes = await db.query(checkQuery, [id, req.branchId]);
+        
+        if (checkRes.rows.length === 0) {
+            await db.query('ROLLBACK');
+            const error = new Error('Payment not found or access denied');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const { member_id, plan_type } = checkRes.rows[0];
+
         const updatePaymentQuery = `
             UPDATE payments 
             SET status = $1 
-            WHERE id = $2 
-            RETURNING member_id, plan_type
+            WHERE id = $2
         `;
-        const paymentRes = await db.query(updatePaymentQuery, [status, id]);
-
-        if (paymentRes.rows.length === 0) {
-            await db.query('ROLLBACK');
-            return res.status(404).json({ error: 'Payment not found' });
-        }
+        await db.query(updatePaymentQuery, [status, id]);
 
         // If approved, update user's subscription end date
         if (status === 'approved') {
-            const { member_id, plan_type } = paymentRes.rows[0];
-            
             // Calculate days to add based on plan_type
             let daysToAdd = 30;
             const type = plan_type.toLowerCase();
             if (type.includes('quarterly')) daysToAdd = 90;
             else if (type.includes('yearly')) daysToAdd = 365;
 
-            // Update enrollments table:
-            // Check if end_date is NULL or in the past, set from CURRENT_DATE + interval
-            // If in the future, add to existing date.
             const updateEnrollmentQuery = `
                 UPDATE enrollments 
                 SET end_date = CASE 
@@ -128,7 +130,7 @@ exports.updatePaymentStatus = async (req, res) => {
         res.json({ message: `Payment ${status} successfully` });
     } catch (error) {
         await db.query('ROLLBACK');
-        console.error('Failed to update payment status:', error);
-        res.status(500).json({ error: 'Failed to update payment' });
+        next(error);
     }
 };
+

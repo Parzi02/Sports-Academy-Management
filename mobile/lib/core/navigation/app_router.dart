@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/splash_screen.dart';
-import '../../features/auth/screens/role_selection_screen.dart';
 import '../../features/auth/screens/phone_entry_screen.dart';
 import '../../features/auth/screens/otp_screen.dart';
 import '../../features/admin/admin_shell_screen.dart';
@@ -50,10 +49,9 @@ final appRouterProvider = Provider((ref) {
       GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
       
       // Auth Routes
-      GoRoute(path: '/auth/role', builder: (context, state) => const RoleSelectionScreen()),
       GoRoute(
         path: '/auth/phone',
-        builder: (context, state) => PhoneEntryScreen(role: state.extra as String),
+        builder: (context, state) => const PhoneEntryScreen(),
       ),
       GoRoute(
         path: '/auth/otp',

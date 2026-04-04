@@ -55,8 +55,9 @@ class SplashScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 48),
                 ElevatedButton(
-                  onPressed: () => context.go('/auth/role'),
+                  onPressed: () => context.go('/auth/phone'),
                   style: ElevatedButton.styleFrom(
+
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
                   ),

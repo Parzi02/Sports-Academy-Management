@@ -1,20 +1,39 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/storage/storage_service.dart';
 import '../models/member_models.dart';
 
 final memberRepositoryProvider = Provider((ref) {
   final client = ref.watch(apiClientProvider);
-  return MemberRepository(client);
+  final storage = ref.watch(storageServiceProvider);
+  return MemberRepository(client, storage);
 });
 
 class MemberRepository {
   final ApiClient _client;
+  final StorageService _storage;
 
-  MemberRepository(this._client);
+  MemberRepository(this._client, this._storage);
+
+  static const _kDashboardCacheKey = 'member_dashboard_cache';
+  static const _kProfileCacheKey = 'member_profile_cache';
+  static const _kEventsCacheKey = 'member_events_cache';
 
   Future<MemberDashboardData> getDashboard() async {
-    final response = await _client.get('/member/dashboard');
-    return MemberDashboardData.fromJson(response.data);
+    try {
+      final response = await _client.get('/member/dashboard');
+      final data = MemberDashboardData.fromJson(response.data);
+      // Cache the fresh data
+      await _storage.save(_kDashboardCacheKey, response.data);
+      return data;
+    } catch (e) {
+      // Fallback to cache if network fails
+      final cachedData = await _storage.get(_kDashboardCacheKey);
+      if (cachedData != null) {
+        return MemberDashboardData.fromJson(cachedData);
+      }
+      rethrow;
+    }
   }
 
   Future<List<MemberAttendanceLog>> getAttendanceLogs() async {
@@ -24,14 +43,33 @@ class MemberRepository {
   }
 
   Future<List<MemberEvent>> getEvents() async {
-    final response = await _client.get('/member/events');
-    final List data = response.data;
-    return data.map((e) => MemberEvent.fromJson(e)).toList();
+    try {
+      final response = await _client.get('/member/events');
+      final List data = response.data;
+      await _storage.save(_kEventsCacheKey, data);
+      return data.map((e) => MemberEvent.fromJson(e)).toList();
+    } catch (e) {
+      final cachedData = await _storage.get(_kEventsCacheKey);
+      if (cachedData != null && cachedData is List) {
+        return cachedData.map((e) => MemberEvent.fromJson(e)).toList();
+      }
+      rethrow;
+    }
   }
 
   Future<MemberProfile> getProfile() async {
-    final response = await _client.get('/member/profile');
-    return MemberProfile.fromJson(response.data);
+    try {
+      final response = await _client.get('/member/profile');
+      final data = MemberProfile.fromJson(response.data);
+      await _storage.save(_kProfileCacheKey, response.data);
+      return data;
+    } catch (e) {
+      final cachedData = await _storage.get(_kProfileCacheKey);
+      if (cachedData != null) {
+        return MemberProfile.fromJson(cachedData);
+      }
+      rethrow;
+    }
   }
 
   Future<void> toggleFavourite(String eventId) async {
@@ -66,6 +104,9 @@ class MemberRepository {
 
   Future<MemberProfile> updateProfile(Map<String, dynamic> data) async {
     final response = await _client.put('/member/profile', data);
-    return MemberProfile.fromJson(response.data);
+    final profile = MemberProfile.fromJson(response.data);
+    await _storage.save(_kProfileCacheKey, response.data);
+    return profile;
   }
 }
+

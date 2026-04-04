@@ -1,7 +1,8 @@
 const db = require('../config/db');
+const logger = require('../config/logger');
 
 // Admin Profile
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
   try {
     const query = `
       SELECT u.id, u.name, u.email, u.phone, u.address, u.profile_photo_base64, b.name as branch_name
@@ -10,15 +11,18 @@ exports.getProfile = async (req, res) => {
       WHERE u.id = $1
     `;
     const result = await db.query(query, [req.user.id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Profile not found' });
+    if (result.rows.length === 0) {
+      const error = new Error('Profile not found');
+      error.statusCode = 404;
+      throw error;
+    }
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Failed to get profile:', error);
-    res.status(500).json({ error: 'Failed to retrieve profile' });
+    next(error);
   }
 };
 
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
   try {
     const { name, email, phone, address, profile_photo_base64 } = req.body;
     
@@ -38,13 +42,12 @@ exports.updateProfile = async (req, res) => {
     
     res.json({ message: 'Profile updated successfully', profile: result.rows[0] });
   } catch (error) {
-    console.error('Failed to update profile:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    next(error);
   }
 };
 
 // Dashboard Stats
-exports.getDashboardStats = async (req, res) => {
+exports.getDashboardStats = async (req, res, next) => {
   try {
     const membersCount = await db.query(
       'SELECT COUNT(*) FROM users WHERE branch_id = $1 AND role = $2',
@@ -60,12 +63,12 @@ exports.getDashboardStats = async (req, res) => {
       totalEvents: parseInt(eventsCount.rows[0].count),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    next(error);
   }
 };
 
 // Member Management
-exports.getMembers = async (req, res) => {
+exports.getMembers = async (req, res, next) => {
   const { search, batchId, status } = req.query;
   try {
     let query = 'SELECT id, name, phone, member_id, role, profile_photo_base64 FROM users WHERE branch_id = $1 AND role = $2';
@@ -76,16 +79,14 @@ exports.getMembers = async (req, res) => {
       params.push(`%${search}%`);
     }
 
-    // Filters for batch and status will be tied to enrollment table join if needed
-    // For now, simple user list
     const result = await db.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch members' });
+    next(error);
   }
 };
 
-exports.getMemberById = async (req, res) => {
+exports.getMemberById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const query = `
@@ -101,17 +102,18 @@ exports.getMemberById = async (req, res) => {
     const result = await db.query(query, [id, req.branchId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' });
+      const error = new Error('Member not found');
+      error.statusCode = 404;
+      throw error;
     }
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Failed to fetch member details:', error);
-    res.status(500).json({ error: 'Failed to fetch member details' });
+    next(error);
   }
 };
 
-exports.addMember = async (req, res) => {
+exports.addMember = async (req, res, next) => {
     const { name, phone, email, dob, gender, address, batch_id, membership_type, profile_photo_base64 } = req.body;
     try {
         await db.query('BEGIN');
@@ -140,13 +142,12 @@ exports.addMember = async (req, res) => {
         res.status(201).json({ message: 'Member added successfully', userId });
     } catch (error) {
         await db.query('ROLLBACK');
-        console.error('Add member error:', error);
-        res.status(500).json({ error: 'Failed to add member' });
+        next(error);
     }
 };
 
 // Attendance
-exports.markAttendance = async (req, res) => {
+exports.markAttendance = async (req, res, next) => {
     const { batchId, date, attendanceList } = req.body; // attendanceList: [{memberId, status}]
     try {
         const queries = attendanceList.map(item => {
@@ -160,12 +161,12 @@ exports.markAttendance = async (req, res) => {
         await Promise.all(queries);
         res.json({ message: 'Attendance marked successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to mark attendance' });
+        next(error);
     }
 };
 
 // Events
-exports.createEvent = async (req, res) => {
+exports.createEvent = async (req, res, next) => {
     const { title, description, sport_category, event_category, date, start_time, end_time, venue, image_base64 } = req.body;
     try {
         const result = await db.query(
@@ -175,13 +176,12 @@ exports.createEvent = async (req, res) => {
         );
         res.status(201).json({ message: 'Event created successfully', eventId: result.rows[0].id });
     } catch (error) {
-        console.error('Create event error:', error);
-        res.status(500).json({ error: 'Failed to create event' });
+        next(error);
     }
 };
 
 // Get Batches for dropdowns
-exports.getBatches = async (req, res) => {
+exports.getBatches = async (req, res, next) => {
     try {
         const result = await db.query(
             'SELECT id, name, sport, start_time, end_time FROM batches WHERE branch_id = $1',
@@ -189,12 +189,12 @@ exports.getBatches = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch batches' });
+        next(error);
     }
 };
 
 // Get Events List
-exports.getEvents = async (req, res) => {
+exports.getEvents = async (req, res, next) => {
     try {
         const result = await db.query(
             'SELECT * FROM events WHERE branch_id = $1 ORDER BY date DESC',
@@ -202,12 +202,12 @@ exports.getEvents = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch events' });
+        next(error);
     }
 };
 
 // Get Attendance for a specific batch and date
-exports.getAttendance = async (req, res) => {
+exports.getAttendance = async (req, res, next) => {
     const { batchId, date } = req.query;
     try {
         const result = await db.query(
@@ -224,13 +224,12 @@ exports.getAttendance = async (req, res) => {
         );
         res.json(result.rows);
     } catch (error) {
-        console.error('Get attendance error:', error);
-        res.status(500).json({ error: 'Failed to fetch attendance' });
+        next(error);
     }
 };
 
 // Get dates with marked attendance in a range
-exports.getMarkedDays = async (req, res) => {
+exports.getMarkedDays = async (req, res, next) => {
     const { startDate, endDate } = req.query;
     try {
         const result = await db.query(
@@ -242,7 +241,7 @@ exports.getMarkedDays = async (req, res) => {
         );
         res.json(result.rows.map(r => r.date));
     } catch (error) {
-        console.error('Get marked days error:', error);
-        res.status(500).json({ error: 'Failed to fetch marked days' });
+        next(error);
     }
 };
+

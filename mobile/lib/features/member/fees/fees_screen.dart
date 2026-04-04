@@ -135,6 +135,7 @@ class FeesScreen extends ConsumerWidget {
                               amount: tx['amount'].toString(),
                               method: 'UPI Bank Transfer',
                               status: tx['status'],
+                              txId: tx['utr_number'] ?? tx['id'].toString(),
                             );
                           },
                         );
@@ -315,6 +316,7 @@ class _TransactionCard extends StatelessWidget {
   final String amount;
   final String method;
   final String status;
+  final String txId;
 
   const _TransactionCard({
     required this.category,
@@ -322,6 +324,7 @@ class _TransactionCard extends StatelessWidget {
     required this.amount,
     required this.method,
     required this.status,
+    required this.txId,
   });
 
   @override
@@ -351,15 +354,25 @@ class _TransactionCard extends StatelessWidget {
               ],
             ),
           ),
+          if (status.toLowerCase() == 'approved')
+            IconButton(
+              icon: const Icon(Icons.download_rounded, color: AppColors.primary, size: 20),
+              onPressed: () {
+                // TODO: Implement actual PDF generation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Receipt downloaded for TXN: $txId')),
+                );
+              },
+            ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('₹ $amount', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(isPending ? 'WAITING FOR THE APPROVAL OF THE ADMIN' : status.toUpperCase(), style: TextStyle(color: iconColor, fontSize: 8, fontWeight: FontWeight.bold)),
-                ],
+              Text(
+                isPending ? 'WAITING FOR APPROVAL' : status.toUpperCase(), 
+                style: TextStyle(color: iconColor, fontSize: 8, fontWeight: FontWeight.bold)
               ),
             ],
           ),

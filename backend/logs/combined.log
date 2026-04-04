@@ -1,0 +1,4 @@
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-05 01:03:19"}
+{"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-05 01:07:25"}
+{"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-05 01:44:08"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-05 01:44:33"}

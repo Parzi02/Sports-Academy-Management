@@ -1,17 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 const cron = require('node-cron');
 const db = require('./config/db');
+const logger = require('./config/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Security Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Support Base64 images
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { error: true, message: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', limiter);
 
 // Basic Health Check
 app.get('/health', (req, res) => {
@@ -23,10 +36,13 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/member', require('./routes/member.routes'));
 
+// Error Handler (must be last)
+app.use(errorHandler);
+
 // 7-Day Data Cleanup Cron Job
 cron.schedule('0 0 * * *', async () => {
     try {
-        console.log('[CRON] Starting event cleanup...');
+        logger.info('[CRON] Starting event cleanup...');
         const result = await db.query(`
             UPDATE events 
             SET image_base64 = NULL, description = NULL 
@@ -34,28 +50,29 @@ cron.schedule('0 0 * * *', async () => {
             AND status = 'past'
             AND (image_base64 IS NOT NULL OR description IS NOT NULL)
         `);
-        console.log(`[CRON] Event cleanup completed. Rows affected: ${result.rowCount}`);
+        logger.info(`[CRON] Event cleanup completed. Rows affected: ${result.rowCount}`);
     } catch (err) {
-        console.error('[CRON] Cleanup error:', err);
+        logger.error('[CRON] Cleanup error:', err);
     }
 });
 
 // 7-Day Payment Screenshot Cleanup Cron Job
 cron.schedule('0 0 * * *', async () => {
     try {
-        console.log('[CRON] Starting payment screenshot cleanup...');
+        logger.info('[CRON] Starting payment screenshot cleanup...');
         const result = await db.query(`
             UPDATE payments 
             SET screenshot_base64 = NULL 
             WHERE created_at < CURRENT_DATE - INTERVAL '7 days' 
             AND screenshot_base64 IS NOT NULL
         `);
-        console.log(`[CRON] Payment cleanup completed. Rows affected: ${result.rowCount}`);
+        logger.info(`[CRON] Payment cleanup completed. Rows affected: ${result.rowCount}`);
     } catch (err) {
-        console.error('[CRON] Payment cleanup error:', err);
+        logger.error('[CRON] Payment cleanup error:', err);
     }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
+

@@ -164,7 +164,7 @@ class AttendanceScreen extends ConsumerWidget {
             ),
           ),
 
-          // 3. Batch Summary Row
+          // 3. Batch Summary Row with Progress Bar
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
             child: batchesState.maybeWhen(
@@ -172,19 +172,35 @@ class AttendanceScreen extends ConsumerWidget {
                 final batch = batches.firstWhere((b) => b.id == selectedBatchId, orElse: () => batches.isNotEmpty ? batches.first : batches.first);
                 final marked = attendanceState.maybeWhen(data: (m) => m.where((x) => x.status != 'pending').length, orElse: () => 0);
                 final total = attendanceState.maybeWhen(data: (m) => m.length, orElse: () => 0);
+                final progress = total > 0 ? marked / total : 0.0;
                 
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                return Column(
                   children: [
-                    Text(batch.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary)),
-                    Text('Time ${batch.startTime} - ${batch.endTime}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                    Text('${marked.toString().padLeft(2, '0')}/${total.toString().padLeft(2, '0')} Marked', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textPrimary)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(batch.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary)),
+                        Text('Time ${batch.startTime} - ${batch.endTime}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        Text('${marked.toString().padLeft(2, '0')}/${total.toString().padLeft(2, '0')} Marked', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.textPrimary)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: AppColors.textSecondary.withOpacity(0.1),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      ),
+                    ),
                   ],
                 );
               },
               orElse: () => const SizedBox(height: 20),
             ),
           ),
+
 
           // 4. Member List
           Expanded(

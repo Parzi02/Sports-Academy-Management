@@ -1,36 +1,33 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
+const logger = require('../config/logger');
 
-exports.sendOtp = async (req, res) => {
+exports.sendOtp = async (req, res, next) => {
   const { phone } = req.body;
-  if (!phone) return res.status(400).json({ error: 'Phone number is required.' });
 
   try {
     if (process.env.USE_MOCK_OTP === 'true') {
-      console.log(`[MOCK] OTP for ${phone} is 1234`);
+      logger.info(`[MOCK] OTP for ${phone} is 1234`);
       return res.json({ sessionId: 'mock_session_id' });
     }
     const url = `https://2factor.in/API/V1/${process.env.TWOFACTOR_API_KEY}/SMS/${phone}/AUTOGEN`;
     const response = await axios.get(url);
     res.json({ sessionId: response.data.Details });
   } catch (error) {
-    console.error('2factor error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to send OTP.' });
+    next(error);
   }
 };
 
-exports.verifyOtp = async (req, res) => {
+exports.verifyOtp = async (req, res, next) => {
   const { phone, otp, sessionId } = req.body;
-  
-  if (!phone || !otp || !sessionId) {
-    return res.status(400).json({ error: 'Phone, OTP, and SessionId are required.' });
-  }
 
   try {
     if (process.env.USE_MOCK_OTP === 'true') {
       if (otp !== '1234') {
-        return res.status(401).json({ error: 'Invalid OTP (Mock mode expects 1234).' });
+        const error = new Error('Invalid OTP (Mock mode expects 1234).');
+        error.statusCode = 401;
+        throw error;
       }
     } else {
       // 1. Verify OTP with 2factor.in
@@ -38,7 +35,9 @@ exports.verifyOtp = async (req, res) => {
       const result = await axios.get(url);
       
       if (result.data.Status !== 'Success') {
-        return res.status(401).json({ error: 'Invalid OTP.' });
+        const error = new Error('Invalid OTP.');
+        error.statusCode = 401;
+        throw error;
       }
     }
 
@@ -47,7 +46,9 @@ exports.verifyOtp = async (req, res) => {
     const user = userRes.rows[0];
 
     if (!user) {
-      return res.status(404).json({ error: 'User not registered.' });
+      const error = new Error('User not registered.');
+      error.statusCode = 404;
+      throw error;
     }
 
     // 3. Generate JWT
@@ -59,7 +60,7 @@ exports.verifyOtp = async (req, res) => {
 
     res.json({ token, user });
   } catch (error) {
-    console.error('OTP verification error:', error.message);
-    res.status(500).json({ error: error.message || 'Authentication failed.' });
+    next(error);
   }
 };
+
