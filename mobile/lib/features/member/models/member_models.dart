@@ -9,10 +9,13 @@ class MemberDashboardData {
   final String sport;
   final String coachName;
   final bool isAttendanceMarkedToday;
+  final bool isPaymentPending;
+  final String? dueDate;
   final List<TodaySchedule>? todaySchedule;
 
   MemberDashboardData({
     required this.isAttendanceMarkedToday,
+    required this.isPaymentPending,
     required this.attendancePercentage,
     required this.attendedSessions,
     required this.totalSessions,
@@ -22,12 +25,14 @@ class MemberDashboardData {
     required this.batchTime,
     required this.sport,
     required this.coachName,
+    this.dueDate,
     this.todaySchedule,
   });
 
   factory MemberDashboardData.fromJson(Map<String, dynamic> json) {
     return MemberDashboardData(
       isAttendanceMarkedToday: json['isAttendanceMarkedToday'] ?? false,
+      isPaymentPending: json['isPaymentPending'] ?? false,
       attendancePercentage: json['attendancePercentage']?.toString() ?? '0.00',
       attendedSessions: json['attendedSessions'] ?? 0,
       totalSessions: json['totalSessions'] ?? 0,
@@ -37,6 +42,7 @@ class MemberDashboardData {
       batchTime: json['batchTime']?.toString() ?? 'TBD',
       sport: json['sport']?.toString() ?? 'Academy Training',
       coachName: json['coachName']?.toString() ?? 'Assigned',
+      dueDate: json['dueDate'],
       todaySchedule: (json['todaySchedule'] as List?)
           ?.map((e) => TodaySchedule.fromJson(e))
           .toList(),

@@ -160,3 +160,9 @@ final attendanceListProvider = StateNotifierProvider.autoDispose<AttendanceListN
   
   return AttendanceListNotifier(repo, batchId, dateStr);
 });
+
+// Admin Pending Payments Provider
+final adminPendingPaymentsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return repo.getPendingPayments();
+});

@@ -100,15 +100,15 @@ class AdminHomeScreen extends ConsumerWidget {
                           onTap: () => context.push('/admin/attendance/mark'),
                         ),
                         _QuickAction(
-                          label: 'New Member', 
-                          icon: Icons.person_add_outlined, 
-                          color: Colors.orange,
-                          onTap: () => context.push('/admin/members'), // Or show add sheet directly
+                          label: 'Payments', 
+                          icon: Icons.payments_outlined, 
+                          color: Colors.green,
+                          onTap: () => context.push('/admin/payments/pending'), 
                         ),
                         _QuickAction(
                           label: 'Create Event', 
                           icon: Icons.campaign_outlined, 
-                          color: Colors.green,
+                          color: Colors.orange,
                           onTap: () => context.push('/admin/events/create'),
                         ),
                       ],

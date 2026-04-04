@@ -42,12 +42,12 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   
   # Images
-  image_picker: ^1.0.7
+  image_picker: ^1.2.1
   cached_network_image: ^3.3.1
   camera: ^0.10.5
   
   # UPI Payments
-  url_launcher: ^6.2.5
+  url_launcher: ^6.3.2
   
   # Notifications
   flutter_local_notifications: ^17.1.2
@@ -58,6 +58,7 @@ dependencies:
   
   # Google Fonts
   google_fonts: ^6.2.1
+  google_mlkit_text_recognition: ^0.15.1
 
 dev_dependencies:
   flutter_test:

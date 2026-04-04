@@ -40,6 +40,22 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 
+// 7-Day Payment Screenshot Cleanup Cron Job
+cron.schedule('0 0 * * *', async () => {
+    try {
+        console.log('[CRON] Starting payment screenshot cleanup...');
+        const result = await db.query(`
+            UPDATE payments 
+            SET screenshot_base64 = NULL 
+            WHERE created_at < CURRENT_DATE - INTERVAL '7 days' 
+            AND screenshot_base64 IS NOT NULL
+        `);
+        console.log(`[CRON] Payment cleanup completed. Rows affected: ${result.rowCount}`);
+    } catch (err) {
+        console.error('[CRON] Payment cleanup error:', err);
+    }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

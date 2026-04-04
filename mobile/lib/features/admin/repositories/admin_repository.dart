@@ -93,4 +93,13 @@ class AdminRepository {
   Future<void> createEvent(Map<String, dynamic> eventData) async {
     await _client.post('/admin/events', eventData);
   }
+
+  Future<List<dynamic>> getPendingPayments() async {
+    final response = await _client.get('/admin/payments/pending');
+    return response.data as List<dynamic>;
+  }
+
+  Future<void> updatePaymentStatus(String paymentId, String status) async {
+    await _client.put('/admin/payments/approve/$paymentId', {'status': status});
+  }
 }

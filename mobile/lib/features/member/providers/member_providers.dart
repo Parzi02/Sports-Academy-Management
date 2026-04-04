@@ -67,3 +67,9 @@ final memberFeeStatusProvider = Provider.autoDispose<String>((ref) {
   final dashboard = ref.watch(memberDashboardProvider).value;
   return dashboard?.feeStatus ?? 'due';
 });
+
+// Payment History Provider
+final paymentHistoryProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final repo = ref.watch(memberRepositoryProvider);
+  return repo.getPaymentHistory();
+});

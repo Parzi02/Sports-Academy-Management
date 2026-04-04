@@ -15,6 +15,7 @@ import '../../features/admin/member_details/member_details_screen.dart';
 import '../../features/admin/attendance/mark_attendance_screen.dart';
 import '../../features/admin/events/create_event_screen.dart';
 import '../../features/admin/profile/admin_profile_screen.dart';
+import '../../features/admin/payments/payment_verification_screen.dart';
 import '../../features/member/member_shell_screen.dart';
 import '../../features/member/home/member_home_screen.dart';
 import '../../features/member/attendance/member_attendance_screen.dart';
@@ -88,6 +89,7 @@ final appRouterProvider = Provider((ref) {
               GoRoute(path: 'create', builder: (context, state) => const CreateEventScreen()),
             ]
           ),
+          GoRoute(path: '/admin/payments/pending', builder: (context, state) => const PaymentVerificationScreen()),
           GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
         ],
       ),

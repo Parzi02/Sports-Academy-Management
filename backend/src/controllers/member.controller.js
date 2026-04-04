@@ -18,7 +18,8 @@ exports.getDashboard = async (req, res) => {
 
         // Enrollment & Batch Info
         const enrollmentRes = await db.query(
-            `SELECT e.payment_status, e.membership_type, b.name as batch_name, b.sport, b.start_time, b.end_time, c.name as coach_name 
+            `SELECT e.payment_status, e.membership_type, e.end_date as due_date, 
+                    b.name as batch_name, b.sport, b.start_time, b.end_time, c.name as coach_name 
              FROM enrollments e 
              JOIN batches b ON e.batch_id = b.id 
              LEFT JOIN users c ON b.coach_id = c.id
@@ -44,13 +45,22 @@ exports.getDashboard = async (req, res) => {
         );
         const isAttendanceMarkedToday = parseInt(todayAttendanceRes.rows[0].count) > 0;
 
+        // Check for pending payments (Wait for approval)
+        const pendingPaymentRes = await db.query(
+            'SELECT COUNT(*) FROM payments WHERE member_id = $1 AND status = $2',
+            [req.user.id, 'pending']
+        );
+        const isPaymentPending = parseInt(pendingPaymentRes.rows[0].count) > 0;
+
         res.json({
             isAttendanceMarkedToday: isAttendanceMarkedToday,
+            isPaymentPending: isPaymentPending,
             attendancePercentage: attendancePercentage.toFixed(2),
             attendedSessions: present,
             totalSessions: total,
             feeStatus: enrollment.payment_status || 'due',
             membershipType: enrollment.membership_type || 'standard',
+            dueDate: enrollment.due_date,
             batchName: enrollment.batch_name || 'No Batch',
             sport: enrollment.sport || 'Academy Training',
             coachName: enrollment.coach_name || 'Assigned',

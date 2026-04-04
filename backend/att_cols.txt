@@ -1,1 +1,0 @@
-[{"column_name":"id"},{"column_name":"member_id"},{"column_name":"batch_id"},{"column_name":"date"},{"column_name":"status"},{"column_name":"marked_by"},{"column_name":"marked_at"},{"column_name":"selfie_base64"}]

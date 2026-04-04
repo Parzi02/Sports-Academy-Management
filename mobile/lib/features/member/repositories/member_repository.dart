@@ -38,6 +38,20 @@ class MemberRepository {
     await _client.post('/member/events/$eventId/favourite', {});
   }
 
+  Future<void> submitPaymentProof(double amount, String planType, String utrNumber, String screenshotBase64) async {
+    await _client.post('/member/payments/submit', {
+      'amount': amount,
+      'planType': planType,
+      'utrNumber': utrNumber,
+      'screenshotBase64': screenshotBase64,
+    });
+  }
+
+  Future<List<dynamic>> getPaymentHistory() async {
+    final response = await _client.get('/member/payments/history');
+    return response.data as List<dynamic>;
+  }
+
   Future<void> recordPayment(double amount, String method) async {
     await _client.post('/member/payments', {
       'amount': amount,

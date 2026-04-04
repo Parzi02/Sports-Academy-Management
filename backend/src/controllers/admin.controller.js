@@ -125,10 +125,15 @@ exports.addMember = async (req, res) => {
         const userId = userRes.rows[0].id;
 
         // 2. Create Enrollment
+        let daysToAdd = 30; // Default to 30 days
+        const type = membership_type.toLowerCase();
+        if (type.includes('quarterly')) daysToAdd = 90;
+        else if (type.includes('yearly')) daysToAdd = 365;
+
         await db.query(
-            `INSERT INTO enrollments (member_id, batch_id, membership_type, start_date, payment_status) 
-             VALUES ($1, $2, $3, CURRENT_DATE, 'due')`,
-            [userId, batch_id, membership_type]
+            `INSERT INTO enrollments (member_id, batch_id, membership_type, start_date, end_date, payment_status) 
+             VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + ($4 || ' days')::interval, 'due')`,
+            [userId, batch_id, membership_type, daysToAdd]
         );
 
         await db.query('COMMIT');
