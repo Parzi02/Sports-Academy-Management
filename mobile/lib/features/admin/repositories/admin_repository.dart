@@ -147,5 +147,26 @@ class AdminRepository {
   Future<void> updatePaymentStatus(String paymentId, String status) async {
     await _client.put('/admin/payments/approve/$paymentId', {'status': status});
   }
+
+  Future<void> recordCashPayment({
+    required String memberId,
+    required double amount,
+    required String planType,
+  }) async {
+    await _client.post('/admin/members/$memberId/pay-cash', {
+      'amount': amount,
+      'planType': planType,
+    });
+  }
+
+  Future<void> updateMemberEnrollment(String userId, {String? batchId, String? membershipType}) async {
+    final Map<String, dynamic> data = {};
+    if (batchId != null) data['batch_id'] = batchId;
+    if (membershipType != null) data['membership_type'] = membershipType;
+    
+    await _client.put('/admin/members/$userId/enrollment', data);
+  }
 }
+
+
 

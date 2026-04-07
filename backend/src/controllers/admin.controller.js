@@ -89,31 +89,116 @@ exports.getMembers = async (req, res, next) => {
 exports.getMemberById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const query = `
+    
+    // 1. Fetch Member Profile
+    const profileQuery = `
       SELECT 
         u.id, u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
-        e.start_date as date_of_joining, e.payment_status as status,
+        e.start_date as date_of_joining, e.payment_status as status, e.membership_type,
         b.name as batch_name, b.start_time as batch_time
       FROM users u
       LEFT JOIN enrollments e ON u.id = e.member_id
       LEFT JOIN batches b ON e.batch_id = b.id
       WHERE u.id = $1 AND u.branch_id = $2
     `;
-    const result = await db.query(query, [id, req.branchId]);
+    const profileRes = await db.query(profileQuery, [id, req.branchId]);
 
-    if (result.rows.length === 0) {
+    if (profileRes.rows.length === 0) {
       const error = new Error('Member not found');
       error.statusCode = 404;
       throw error;
     }
 
-    res.json(result.rows[0]);
+    const profile = profileRes.rows[0];
+
+    // Calculate Amount Due
+    let amountDue = 500;
+    const type = (profile.membership_type || '').toLowerCase();
+    if (type.includes('quarterly')) amountDue = 1500;
+    else if (type.includes('yearly')) amountDue = 6000;
+
+    // 2. Fetch Attendance History (last 30)
+    const attendanceQuery = `
+      SELECT a.id, TO_CHAR(a.date, 'YYYY-MM-DD') as date, a.status, b.name as batch_name
+      FROM attendance a
+      JOIN batches b ON a.batch_id = b.id
+      WHERE a.member_id = $1
+      ORDER BY a.date DESC
+      LIMIT 30
+    `;
+    const attendanceRes = await db.query(attendanceQuery, [id]);
+
+    // 3. Fetch Payment History
+    const paymentQuery = `
+      SELECT id, amount, plan_type, utr_number, status, TO_CHAR(created_at, 'YYYY-MM-DD') as date
+      FROM payments
+      WHERE member_id = $1
+      ORDER BY created_at DESC
+    `;
+    const paymentRes = await db.query(paymentQuery, [id]);
+
+    res.json({
+      ...profile,
+      amount_due: amountDue,
+      attendance: attendanceRes.rows,
+      payments: paymentRes.rows,
+    });
   } catch (error) {
     next(error);
   }
 };
 
+exports.recordCashPayment = async (req, res, next) => {
+    const { id } = req.params;
+    const { amount, planType } = req.body;
+
+    try {
+        await db.query('BEGIN');
+
+        // 1. Verify existence of member in admin's branch
+        const userCheck = await db.query('SELECT id FROM users WHERE id = $1 AND branch_id = $2', [id, req.branchId]);
+        if (userCheck.rows.length === 0) {
+            await db.query('ROLLBACK');
+            const error = new Error('Member not found or access denied');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // 2. Insert payment record (status = approved, utr_number = CASH)
+        const insertQuery = `
+            INSERT INTO payments (member_id, amount, plan_type, utr_number, status, recorded_by) 
+            VALUES ($1, $2, $3, 'CASH', 'success', $4)
+        `;
+        await db.query(insertQuery, [id, amount, planType, req.user.id]);
+
+
+        // 3. Update enrollment status and end_date
+        let daysToAdd = 30;
+        const type = planType.toLowerCase();
+        if (type.includes('quarterly')) daysToAdd = 90;
+        else if (type.includes('yearly')) daysToAdd = 365;
+
+        const updateEnrollmentQuery = `
+            UPDATE enrollments 
+            SET end_date = CASE 
+                WHEN end_date IS NULL OR end_date < CURRENT_DATE THEN CURRENT_DATE + ($1 || ' days')::interval
+                ELSE end_date + ($1 || ' days')::interval
+            END,
+            payment_status = 'paid'
+            WHERE member_id = $2
+        `;
+        await db.query(updateEnrollmentQuery, [daysToAdd, id]);
+
+        await db.query('COMMIT');
+        res.json({ message: 'Cash payment recorded successfully' });
+    } catch (error) {
+        await db.query('ROLLBACK');
+        next(error);
+    }
+};
+
 exports.addMember = async (req, res, next) => {
+
     const { name, phone, email, dob, gender, address, batch_id, membership_type, profile_photo_base64 } = req.body;
     try {
         await db.query('BEGIN');
@@ -150,6 +235,14 @@ exports.addMember = async (req, res, next) => {
 exports.markAttendance = async (req, res, next) => {
     const { batchId, date, attendanceList } = req.body; // attendanceList: [{memberId, status}]
     try {
+        // Security Check: Verify batch belongs to admin's branch
+        const batchCheck = await db.query('SELECT id FROM batches WHERE id = $1 AND branch_id = $2', [batchId, req.branchId]);
+        if (batchCheck.rows.length === 0) {
+            const error = new Error('Batch not found or access denied');
+            error.statusCode = 403;
+            throw error;
+        }
+
         const queries = attendanceList.map(item => {
             return db.query(
                 `INSERT INTO attendance (member_id, batch_id, date, status, marked_by) 
@@ -164,6 +257,7 @@ exports.markAttendance = async (req, res, next) => {
         next(error);
     }
 };
+
 
 // Events
 exports.createEvent = async (req, res, next) => {
@@ -210,20 +304,80 @@ exports.getEvents = async (req, res, next) => {
 exports.getAttendance = async (req, res, next) => {
     const { batchId, date } = req.query;
     try {
+        // Security Check: Verify batch belongs to admin's branch
+        const batchCheck = await db.query('SELECT id FROM batches WHERE id = $1 AND branch_id = $2', [batchId, req.branchId]);
+        if (batchCheck.rows.length === 0) {
+            const error = new Error('Batch not found or access denied');
+            error.statusCode = 403;
+            throw error;
+        }
+
         const result = await db.query(
             `SELECT 
                 u.id, 
                 u.name, 
-                u.member_id, 
-                COALESCE(a.status, 'pending') as status
-             FROM users u
-             JOIN enrollments e ON u.id = e.member_id
-             LEFT JOIN attendance a ON u.id = a.member_id AND a.batch_id = $2 AND a.date = $3
-             WHERE u.branch_id = $1 AND e.batch_id = $2 AND u.role = 'member'`,
-            [req.branchId, batchId, date]
+                u.member_id,
+                a.status
+             FROM enrollments e
+             JOIN users u ON e.member_id = u.id
+             LEFT JOIN attendance a ON u.id = a.member_id AND a.batch_id = $1 AND a.date = $2
+             WHERE e.batch_id = $1 AND u.branch_id = $3`,
+            [batchId, date, req.branchId]
         );
         res.json(result.rows);
     } catch (error) {
+        next(error);
+    }
+};
+
+// Update Member Enrollment (Batch & Plan)
+exports.updateMemberEnrollment = async (req, res, next) => {
+    const { id } = req.params;
+    const { batch_id, membership_type } = req.body;
+
+    try {
+        await db.query('BEGIN');
+
+        // Security Check: Verify member belongs to admin's branch
+        const memberCheck = await db.query(
+            'SELECT id FROM users WHERE id = $1 AND branch_id = $2 AND role = $3',
+            [id, req.branchId, 'member']
+        );
+
+        if (memberCheck.rows.length === 0) {
+            await db.query('ROLLBACK');
+            const error = new Error('Member not found or access denied');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        // Update enrollment
+        const updateFields = [];
+        const params = [id];
+        let paramIndex = 2;
+
+        if (batch_id) {
+            updateFields.push(`batch_id = $${paramIndex++}`);
+            params.push(batch_id);
+        }
+        if (membership_type) {
+            updateFields.push(`membership_type = $${paramIndex++}`);
+            params.push(membership_type);
+        }
+
+        if (updateFields.length > 0) {
+            const updateQuery = `
+                UPDATE enrollments 
+                SET ${updateFields.join(', ')} 
+                WHERE member_id = $1
+            `;
+            await db.query(updateQuery, params);
+        }
+
+        await db.query('COMMIT');
+        res.json({ message: 'Enrollment updated successfully' });
+    } catch (error) {
+        await db.query('ROLLBACK');
         next(error);
     }
 };

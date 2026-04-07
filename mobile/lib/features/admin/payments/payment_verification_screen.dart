@@ -184,15 +184,16 @@ class _VerificationCardState extends ConsumerState<_VerificationCard> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: () => _updateStatus('rejected'),
+                    onPressed: () => _updateStatus('failed'),
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     tooltip: 'Reject',
                   ),
                   IconButton(
-                    onPressed: () => _updateStatus('approved'),
+                    onPressed: () => _updateStatus('success'),
                     icon: const Icon(Icons.check_circle, color: AppColors.success, size: 32),
                     tooltip: 'Approve',
                   ),
+
                 ],
               ),
           ],

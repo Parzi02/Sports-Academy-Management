@@ -8,7 +8,8 @@ const addMember = {
     dob: Joi.date().allow(null),
     gender: Joi.string().valid('male', 'female', 'other').allow('', null),
     address: Joi.string().allow('', null),
-    batch_id: Joi.number().integer().required(),
+    batch_id: Joi.string().required(),
+
     membership_type: Joi.string().required(),
     profile_photo_base64: Joi.string().allow('', null),
   }),

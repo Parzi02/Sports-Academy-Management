@@ -72,36 +72,35 @@ class FeesScreen extends ConsumerWidget {
                   data: (data) {
                     final isPending = data.isPaymentPending;
                     final dueDateTime = data.dueDate != null ? DateTime.parse(data.dueDate!) : null;
+                    final bool isDue = data.feeStatus == 'due';
                     
-                    // Logic: Expiring soon (within 3 days) or already expired
+                    // Renewal window: Expiring soon (within 3 days) or already expired
                     final bool isDueSoonOrExpired = dueDateTime == null || 
                                                      dueDateTime.isBefore(DateTime.now().add(const Duration(days: 3)));
                     
-                    // Show "PAY NOW" ONLY if NOT pending AND (Expired OR Expiring within 3 days)
-                    final bool showPayButton = !isPending && isDueSoonOrExpired && data.feeStatus != 'paid';
-
-                    if (data.feeStatus == 'paid' && !isDueSoonOrExpired) {
-                       return const _NoDuesCard();
-                    }
+                    // Show "PAY NOW" if NOT pending AND (Status is 'due' OR within renewal window)
+                    final bool showPayButton = !isPending && (isDue || isDueSoonOrExpired);
 
                     if (isPending) {
                        return const _PendingApprovalCard();
                     }
 
-                    if (!showPayButton && data.feeStatus != 'paid') {
-                       // Membership is active and expires in more than 3 days
-                       return _ActiveMembershipCard(dueDate: data.dueDate);
+                    if (showPayButton) {
+                      return _DueStatusCard(
+                        membershipType: data.membershipType,
+                        dueDate: data.dueDate,
+                        onPay: () async {
+                           await _launchUPI(context, data.membershipType);
+                           if (context.mounted) {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => UpiPaymentScreen(initialPlan: data.membershipType)));
+                           }
+                        },
+                      );
                     }
 
-                    return _DueStatusCard(
-                      membershipType: data.membershipType,
-                      dueDate: data.dueDate,
-                      onPay: () async {
-                         await _launchUPI(context, data.membershipType);
-                         if (context.mounted) {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => UpiPaymentScreen(initialPlan: data.membershipType)));
-                         }
-                      },
+                    return _ActiveMembershipCard(
+                        dueDate: data.dueDate, 
+                        membershipType: data.membershipType,
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
@@ -257,33 +256,58 @@ class _PendingApprovalCard extends StatelessWidget {
 
 class _ActiveMembershipCard extends StatelessWidget {
   final String? dueDate;
-  const _ActiveMembershipCard({this.dueDate});
+  final String membershipType;
+  
+  const _ActiveMembershipCard({
+    this.dueDate,
+    required this.membershipType,
+  });
 
   @override
   Widget build(BuildContext context) {
     final formattedDate = dueDate != null ? DateFormat('dd MMM yyyy').format(DateTime.parse(dueDate!)) : 'TBD';
-    
+    final amount = AppConstants.membershipPrices[membershipType.toLowerCase()] ?? 0.0;
+    final label = AppConstants.getPlanLabel(membershipType);
+
     return Container(
       padding: const EdgeInsets.all(32),
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 10)),
+        ],
       ),
       child: Column(
         children: [
-          const Icon(Icons.verified, color: AppColors.primary, size: 60),
-          const SizedBox(height: 24),
-          const Text('Membership Active', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          const Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 64),
+          const SizedBox(height: 16),
+          const Text('Membership Active', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
           const SizedBox(height: 8),
-          Text('Your plan is valid until $formattedDate.', style: const TextStyle(color: AppColors.textSecondary), textAlign: TextAlign.center),
-          const SizedBox(height: 4),
-          const Text('Renewal opens 3 days before expiry.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12), textAlign: TextAlign.center),
+          Text(label, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 24),
+          const Text('Active Plan Fee', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(AppConstants.formatCurrency(amount), style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28, color: AppColors.textPrimary)),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 8),
+              Text('Valid Until: $formattedDate', style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text('Renewal opens 3 days before expiry.', style: TextStyle(color: AppColors.textSecondary, fontSize: 11), textAlign: TextAlign.center),
         ],
       ),
     );
   }
 }
+
 
 class _NoDuesCard extends StatelessWidget {
   const _NoDuesCard();
@@ -330,9 +354,9 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isPending = status.toLowerCase() == 'pending';
-    bool isRejected = status.toLowerCase() == 'rejected';
-    Color iconColor = isPending ? AppColors.alert : (isRejected ? Colors.red : AppColors.success);
-    IconData iconData = isPending ? Icons.pending_actions : (isRejected ? Icons.cancel : Icons.check);
+    bool isFailed = status.toLowerCase() == 'failed';
+    Color iconColor = isPending ? AppColors.alert : (isFailed ? Colors.red : AppColors.success);
+    IconData iconData = isPending ? Icons.pending_actions : (isFailed ? Icons.cancel : Icons.check);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -354,7 +378,8 @@ class _TransactionCard extends StatelessWidget {
               ],
             ),
           ),
-          if (status.toLowerCase() == 'approved')
+          if (status.toLowerCase() == 'success')
+
             IconButton(
               icon: const Icon(Icons.download_rounded, color: AppColors.primary, size: 20),
               onPressed: () {

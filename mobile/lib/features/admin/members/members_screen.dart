@@ -295,12 +295,14 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
                         'phone': _phoneController.text,
                         'email': _emailController.text,
                         'dob': dobString,
-                        'gender': _selectedGender ?? 'Not Specified',
+                        'gender': _selectedGender?.toLowerCase() ?? 'other',
                         'address': _addressController.text,
                         'batch_id': _selectedBatchId,
                         'membership_type': _selectedMembershipType,
                         'profile_photo_base64': _profilePhotoBase64,
                       });
+
+
                       if (mounted) Navigator.pop(context);
                     } catch (e) {
                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add member: $e')));

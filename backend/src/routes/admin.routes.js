@@ -22,6 +22,10 @@ router.get('/attendance', adminController.getAttendance);
 router.get('/attendance/marked-days', adminController.getMarkedDays);
 
 router.post('/members', validate(adminValidation.addMember), adminController.addMember);
+router.post('/members/:id/pay-cash', adminController.recordCashPayment);
+router.put('/members/:id/enrollment', adminController.updateMemberEnrollment);
+
+
 router.post('/attendance', validate(adminValidation.markAttendance), adminController.markAttendance);
 router.post('/events', validate(adminValidation.createEvent), adminController.createEvent);
 

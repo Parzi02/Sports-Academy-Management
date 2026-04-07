@@ -70,10 +70,10 @@ exports.getPendingPayments = async (req, res, next) => {
 // Admin: Approve or Reject a payment
 exports.updatePaymentStatus = async (req, res, next) => {
     const { id } = req.params;
-    const { status } = req.body; // 'approved' or 'rejected'
+    const { status } = req.body; // 'success' or 'failed'
 
-    if (!['approved', 'rejected'].includes(status)) {
-        const error = new Error('Invalid status');
+    if (!['success', 'failed'].includes(status)) {
+        const error = new Error('Invalid status. Use success or failed.');
         error.statusCode = 400;
         return next(error);
     }
@@ -106,8 +106,8 @@ exports.updatePaymentStatus = async (req, res, next) => {
         `;
         await db.query(updatePaymentQuery, [status, id]);
 
-        // If approved, update user's subscription end date
-        if (status === 'approved') {
+        // If success (approved), update user's subscription end date
+        if (status === 'success') {
             // Calculate days to add based on plan_type
             let daysToAdd = 30;
             const type = plan_type.toLowerCase();
@@ -127,10 +127,11 @@ exports.updatePaymentStatus = async (req, res, next) => {
         }
 
         await db.query('COMMIT');
-        res.json({ message: `Payment ${status} successfully` });
+        res.json({ message: `Payment ${status === 'success' ? 'approved' : 'rejected'} successfully` });
     } catch (error) {
         await db.query('ROLLBACK');
         next(error);
     }
 };
+
 

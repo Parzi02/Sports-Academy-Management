@@ -73,6 +73,10 @@ class AdminMemberProfile {
   final String status;
   final String batchName;
   final String batchTime;
+  final double amountDue;
+  final String membershipType;
+  final List<MemberAttendanceRecord> attendance;
+  final List<MemberPaymentRecord> payments;
 
   AdminMemberProfile({
     required this.id,
@@ -88,6 +92,10 @@ class AdminMemberProfile {
     required this.status,
     required this.batchName,
     required this.batchTime,
+    required this.amountDue,
+    required this.membershipType,
+    required this.attendance,
+    required this.payments,
   });
 
   factory AdminMemberProfile.fromJson(Map<String, dynamic> json) {
@@ -105,9 +113,71 @@ class AdminMemberProfile {
       status: json['status']?.toString() ?? 'unknown',
       batchName: json['batch_name']?.toString() ?? 'No Batch',
       batchTime: json['batch_time']?.toString() ?? '',
+      amountDue: (json['amount_due'] as num?)?.toDouble() ?? 0.0,
+      membershipType: json['membership_type']?.toString() ?? 'Monthly',
+      attendance: (json['attendance'] as List? ?? [])
+          .map((e) => MemberAttendanceRecord.fromJson(e))
+          .toList(),
+      payments: (json['payments'] as List? ?? [])
+          .map((e) => MemberPaymentRecord.fromJson(e))
+          .toList(),
     );
   }
 }
+
+
+class MemberAttendanceRecord {
+  final String id;
+  final String date;
+  final String status;
+  final String batchName;
+
+  MemberAttendanceRecord({
+    required this.id,
+    required this.date,
+    required this.status,
+    required this.batchName,
+  });
+
+  factory MemberAttendanceRecord.fromJson(Map<String, dynamic> json) {
+    return MemberAttendanceRecord(
+      id: json['id']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      batchName: json['batch_name']?.toString() ?? '',
+    );
+  }
+}
+
+class MemberPaymentRecord {
+  final String id;
+  final String amount;
+  final String planType;
+  final String utrNumber;
+  final String status;
+  final String date;
+
+  MemberPaymentRecord({
+    required this.id,
+    required this.amount,
+    required this.planType,
+    required this.utrNumber,
+    required this.status,
+    required this.date,
+  });
+
+  factory MemberPaymentRecord.fromJson(Map<String, dynamic> json) {
+    return MemberPaymentRecord(
+      id: json['id']?.toString() ?? '',
+      amount: json['amount']?.toString() ?? '0',
+      planType: json['plan_type']?.toString() ?? '',
+      utrNumber: json['utr_number']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+    );
+  }
+}
+
 
 class AdminBatch {
   final String id;
