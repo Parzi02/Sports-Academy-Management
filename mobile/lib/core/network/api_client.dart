@@ -5,7 +5,7 @@ import '../../features/auth/providers/auth_provider.dart';
 final apiClientProvider = Provider((ref) => ApiClient(ref));
 
 class ApiClient {
-  static const _baseUrl = 'http://192.168.0.10:3000/api'; //http://10.0.2.2:3000/api
+  static const _baseUrl = 'http://192.168.1.7:3000/api'; //http://10.0.2.2:3000/api
   late final Dio _dio;
   final Ref _ref;
 

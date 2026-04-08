@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/member_providers.dart';
 import '../models/member_models.dart';
@@ -15,7 +16,7 @@ class MemberAttendanceScreen extends ConsumerStatefulWidget {
 }
 
 class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen> {
-  final DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -70,17 +71,57 @@ class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen>
                 ),
               ),
 
-              // 2. Date Indicator: Calendar Icon + February, 2026
+              // 2. Date Indicator: Calendar Picker
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverToBoxAdapter(
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_month, size: 20, color: AppColors.primary),
-                      const SizedBox(width: 12),
-                      Text(
-                        DateFormat('MMMM, yyyy').format(_selectedDate),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      GestureDetector(
+                        onTap: () async {
+                          final logs = attendanceState.value ?? [];
+                          final DateTime? picked = await showDialog<DateTime>(
+                            context: context,
+                            builder: (context) {
+                              return Dialog(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: _CalendarWidget(
+                                    initialDate: _selectedDate,
+                                    logs: logs,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                          if (picked != null && picked != _selectedDate) {
+                            setState(() {
+                              _selectedDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppColors.surface, width: 2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_month, size: 18, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat('dd MMM, yyyy').format(_selectedDate),
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.keyboard_arrow_down, size: 20, color: AppColors.primary),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -91,49 +132,48 @@ class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen>
               SliverPadding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 sliver: SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 80,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: 7,
-                      itemBuilder: (context, index) {
-                        final now = DateTime.now();
-                        final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      children: List.generate(7, (index) {
+                        final baseDate = _selectedDate;
+                        final firstDayOfWeek = baseDate.subtract(Duration(days: baseDate.weekday - 1));
                         final date = firstDayOfWeek.add(Duration(days: index));
-                        final isSelected = date.day == now.day && date.month == now.month;
+                        final isSelected = date.day == baseDate.day && date.month == baseDate.month && date.year == baseDate.year;
 
-                        return Container(
-                          width: 55,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primary : AppColors.surface,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))] : null,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                DateFormat('E').format(date),
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white70 : AppColors.textSecondary,
-                                  fontSize: 12,
+                        return Expanded(
+                          child: Container(
+                            height: 75,
+                            margin: EdgeInsets.only(right: index == 6 ? 0 : 6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.primary : AppColors.surface,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))] : null,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  DateFormat('E').format(date),
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white70 : AppColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('dd').format(date),
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat('dd').format(date),
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
-                      },
+                      }),
                     ),
                   ),
                 ),
@@ -344,3 +384,97 @@ class _AttendanceListTile extends StatelessWidget {
   }
 }
 
+class _CalendarWidget extends StatefulWidget {
+  final DateTime initialDate;
+  final List<MemberAttendanceLog> logs;
+
+  const _CalendarWidget({required this.initialDate, required this.logs});
+
+  @override
+  State<_CalendarWidget> createState() => _CalendarWidgetState();
+}
+
+class _CalendarWidgetState extends State<_CalendarWidget> {
+  late DateTime _focusedDay;
+  late DateTime _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusedDay = widget.initialDate;
+    _selectedDay = widget.initialDate;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TableCalendar(
+          firstDay: DateTime(2020),
+          lastDay: DateTime(2100),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+          onDaySelected: (selectedDay, focusedDay) {
+            setState(() {
+              _selectedDay = selectedDay;
+              _focusedDay = focusedDay;
+            });
+            Navigator.of(context).pop(selectedDay);
+          },
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+          ),
+          calendarStyle: CalendarStyle(
+            cellMargin: const EdgeInsets.all(10),
+            selectedDecoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+            todayDecoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
+            todayTextStyle: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+          ),
+          calendarBuilders: CalendarBuilders(
+            markerBuilder: (context, date, events) {
+              MemberAttendanceLog? matchLog;
+              for (var log in widget.logs) {
+                try {
+                  final logDate = DateTime.parse(log.date);
+                  if (isSameDay(logDate, date)) {
+                    matchLog = log;
+                    break;
+                  }
+                } catch (_) {}
+              }
+
+              if (matchLog != null) {
+                Color ringColor;
+                if (matchLog.status == 'present') {
+                  ringColor = AppColors.success;
+                } else if (matchLog.status == 'absent') {
+                  ringColor = AppColors.alert;
+                } else {
+                  return null;
+                }
+
+                return Positioned.fill(
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: ringColor, width: 2.5),
+                    ),
+                  ),
+                );
+              }
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+        ),
+      ],
+    );
+  }
+}

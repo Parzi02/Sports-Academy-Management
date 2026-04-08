@@ -138,7 +138,7 @@ class MemberProfileScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 120), // Added extra safety padding for the dynamic island nav bar
                   ],
                 ),
               ),

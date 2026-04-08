@@ -117,7 +117,7 @@ exports.markSelfAttendance = async (req, res, next) => {
 exports.getAttendanceLogs = async (req, res, next) => {
     try {
         const result = await db.query(
-            'SELECT date, status FROM attendance WHERE member_id = $1 ORDER BY date DESC',
+            "SELECT TO_CHAR(date, 'YYYY-MM-DD') as date, status FROM attendance WHERE member_id = $1 ORDER BY date DESC",
             [req.user.id]
         );
         res.json(result.rows);
@@ -130,7 +130,7 @@ exports.getAttendanceLogs = async (req, res, next) => {
 exports.getEvents = async (req, res, next) => {
     try {
         const result = await db.query(
-            'SELECT id, title, sport_category, event_category, date, venue, status FROM events WHERE branch_id = $1 ORDER BY date DESC',
+            "SELECT id, title, sport_category, event_category, TO_CHAR(date, 'YYYY-MM-DD') as date, venue, status FROM events WHERE branch_id = $1 ORDER BY date DESC",
             [req.branchId]
         );
         res.json(result.rows);
