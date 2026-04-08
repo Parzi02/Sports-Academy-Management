@@ -63,7 +63,7 @@ class AdminHomeScreen extends ConsumerWidget {
           dashboardState.when(
             data: (stats) => SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

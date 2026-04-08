@@ -146,7 +146,7 @@ class FeesScreen extends ConsumerWidget {
                 ),
               ),
               
-              const SizedBox(height: 100), // Spacing for bottom
+              const SizedBox(height: 120), // Spacing for bottom
             ],
           ),
         ),

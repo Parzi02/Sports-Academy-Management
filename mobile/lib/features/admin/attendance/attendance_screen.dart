@@ -263,7 +263,7 @@ class AttendanceScreen extends ConsumerWidget {
 
           // 5. Submit Button (matches screenshot logic)
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
             child: ElevatedButton(
               onPressed: selectedBatchId == null ? null : () async {
                 final members = ref.read(attendanceListProvider).value ?? [];

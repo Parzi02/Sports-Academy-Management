@@ -114,6 +114,7 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                 child: const Text('PUBLISH EVENT'),
               ),
             ),
+            const SizedBox(height: 120),
           ],
         ),
       ),

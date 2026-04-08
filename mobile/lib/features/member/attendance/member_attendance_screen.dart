@@ -296,7 +296,7 @@ class _MemberAttendanceScreenState extends ConsumerState<MemberAttendanceScreen>
                   ),
                 ),
               ),
-              const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
             ],
           ),
         ),

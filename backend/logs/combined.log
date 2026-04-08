@@ -44,3 +44,8 @@
 {"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-08 21:09:07"}
 {"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-08 21:09:13"}
 {"level":"info","message":"[MOCK] OTP for 911122334455 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:11:49"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:22:34"}
+{"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:45:12"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:45:42"}
+{"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:46:38"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-08 22:08:26"}

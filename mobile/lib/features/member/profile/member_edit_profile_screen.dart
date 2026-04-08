@@ -174,6 +174,7 @@ class _MemberEditProfileScreenState extends ConsumerState<MemberEditProfileScree
                       child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),

@@ -240,6 +240,7 @@ class _DetailsTabState extends State<_DetailsTab> {
                 ),
                 child: const Text('DELETE MEMBER'),
               ),
+              const SizedBox(height: 120),
             ],
           ),
         );
@@ -330,7 +331,7 @@ class _AttendanceTab extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
       itemCount: attendance.length,
       itemBuilder: (context, index) {
         final record = attendance[index];
@@ -358,7 +359,7 @@ class _PaymentsTab extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
       itemCount: payments.length,
       itemBuilder: (context, index) {
         final payment = payments[index];

@@ -63,7 +63,7 @@ class _MemberEventsScreenState extends ConsumerState<MemberEventsScreen> {
                   return const Center(child: Text('No events found'));
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 120),
                   itemCount: filteredEvents.length,
                   itemBuilder: (context, index) => _EventCard(event: filteredEvents[index]),
                 );
@@ -135,10 +135,12 @@ class _EventCard extends ConsumerWidget {
     final eventDate = DateTime.parse(event.date);
     final formattedDate = DateFormat('MMM dd').format(eventDate);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return GestureDetector(
+      onTap: () => context.push('/member/events/${event.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 5)),
@@ -221,6 +223,6 @@ class _EventCard extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

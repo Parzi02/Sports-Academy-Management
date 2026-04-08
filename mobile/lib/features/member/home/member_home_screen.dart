@@ -222,7 +222,7 @@ class MemberHomeScreen extends ConsumerWidget {
               ),
             ),
             
-            const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 120)),
           ],
         ),
       ),

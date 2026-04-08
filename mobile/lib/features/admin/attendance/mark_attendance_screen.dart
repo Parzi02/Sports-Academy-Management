@@ -121,6 +121,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
       context: context,
       builder: (context) => ListView(
         shrinkWrap: true,
+        padding: const EdgeInsets.only(bottom: 120),
         children: batches.map((b) => ListTile(
           title: Text(b.name),
           subtitle: Text(b.sport),

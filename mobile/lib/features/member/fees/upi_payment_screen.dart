@@ -340,6 +340,7 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
                 : const Text('SUBMIT PROOF', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ),
+          const SizedBox(height: 120),
         ],
       ),
     );

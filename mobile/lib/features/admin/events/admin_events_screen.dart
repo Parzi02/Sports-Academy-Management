@@ -62,7 +62,7 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
                   return const Center(child: Text('No events found'));
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 120),
                   itemCount: filteredEvents.length,
                   itemBuilder: (context, index) => _AdminEventCard(event: filteredEvents[index]),
                 );
@@ -73,10 +73,13 @@ class _AdminEventsScreenState extends ConsumerState<AdminEventsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/admin/events/create'),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/admin/events/create'),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
       ),
     );
   }

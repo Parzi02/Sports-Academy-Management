@@ -49,99 +49,99 @@ class MemberProfileScreen extends ConsumerWidget {
       ),
       body: profileState.when(
         data: (profile) => SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Member ID
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(24),
-                width: double.infinity,
-                child: Column(
-                  children: [
-                    Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 60, 
-                          backgroundImage: profile.profilePhotoBase64 != null && profile.profilePhotoBase64!.isNotEmpty
-                              ? MemoryImage(base64Decode(profile.profilePhotoBase64!))
-                              : const AssetImage('assets/images/default_avatar_gray.png') as ImageProvider,
+              const SizedBox(height: 16),
+              Center(
+                child: GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MemberEditProfileScreen(profile: profile)),
+                  ),
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: AppColors.surface,
+                        backgroundImage: profile.profilePhotoBase64 != null && profile.profilePhotoBase64!.isNotEmpty
+                            ? MemoryImage(base64Decode(profile.profilePhotoBase64!))
+                            : const AssetImage('assets/images/default_avatar_gray.png') as ImageProvider,
+                      ),
+                      const Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          backgroundColor: AppColors.primary,
+                          radius: 18,
+                          child: Icon(Icons.edit, color: Colors.white, size: 18),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => MemberEditProfileScreen(profile: profile)),
-                            ),
-                            child: const CircleAvatar(backgroundColor: AppColors.primary, radius: 18, child: Icon(Icons.camera_alt, color: Colors.white, size: 18)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(profile.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
-                      child: Text('Member ID: ${profile.memberId}', style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12)),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 16),
+              const Center(child: Text('Tap to Edit Profile', style: TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+              const SizedBox(height: 32),
               
-              // Details Sections
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _SectionHeader(title: 'Personal Details'),
-                    _ProfileInfoRow(label: 'Phone Number', value: profile.phone),
-                    _ProfileInfoRow(label: 'Email', value: profile.email ?? 'Not provided'),
-                    _ProfileInfoRow(label: 'Date of Birth', value: formatDate(profile.dob)),
-                    _ProfileInfoRow(label: 'Gender', value: profile.gender ?? 'Not provided'),
-                    _ProfileInfoRow(label: 'Address', value: profile.address ?? 'Not provided'),
-                    _ProfileInfoRow(label: 'Date of Joining', value: formatDate(profile.dateOfJoining)),
-                    
-                    const SizedBox(height: 32),
-                    
-                    const _SectionHeader(title: 'Enrollment Details'),
-                    dashboardState.when(
-                      data: (data) => _EnrollmentCard(
-                        sport: data.sport,
-                        coach: data.coachName,
-                        batchTime: data.batchTime,
-                        membership: data.membershipType.toUpperCase(),
-                        status: data.feeStatus.toUpperCase(),
-                      ),
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (_, __) => const SizedBox(),
-                    ),
-                    
-                    const SizedBox(height: 48),
-                    
-                    // Logout Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          ref.read(authStateProvider.notifier).logout();
-                        },
-                        icon: const Icon(Icons.logout, color: AppColors.alert),
-                        label: const Text('LOGOUT', style: TextStyle(color: AppColors.alert, fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.alert),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 120), // Added extra safety padding for the dynamic island nav bar
-                  ],
+              _ProfileItem(label: 'Full Name', value: profile.name, icon: Icons.person_outline),
+              _ProfileItem(label: 'Email Address', value: profile.email?.isNotEmpty == true ? profile.email! : 'Not Provided', icon: Icons.email_outlined),
+              _ProfileItem(label: 'Phone Number', value: profile.phone, icon: Icons.phone_outlined),
+              _ProfileItem(label: 'Date of Birth', value: formatDate(profile.dob), icon: Icons.calendar_today_outlined),
+              _ProfileItem(label: 'Gender', value: profile.gender?.isNotEmpty == true ? profile.gender! : 'Not Provided', icon: Icons.wc_outlined),
+              _ProfileItem(label: 'Address', value: profile.address?.isNotEmpty == true ? profile.address! : 'Not Provided', icon: Icons.home_work_outlined),
+              _ProfileItem(label: 'Date of Joining', value: formatDate(profile.dateOfJoining), icon: Icons.date_range_outlined),
+
+              const SizedBox(height: 16),
+              const _SectionHeader(title: 'Enrollment Details'),
+              dashboardState.when(
+                data: (data) => _EnrollmentCard(
+                  sport: data.sport,
+                  coach: data.coachName,
+                  batchTime: data.batchTime,
+                  membership: data.membershipType.toUpperCase(),
+                  status: data.feeStatus.toUpperCase(),
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const SizedBox(),
+              ),
+
+              const SizedBox(height: 32),
+              ListTile(
+                onTap: () {},
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.settings_outlined),
+                title: const Text('Account Settings'),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+              ListTile(
+                onTap: () {},
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.security_outlined),
+                title: const Text('Privacy & Security'),
+                trailing: const Icon(Icons.chevron_right),
+              ),
+              const SizedBox(height: 48),
+
+              // Logout Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    ref.read(authStateProvider.notifier).logout();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: const Text('LOGOUT', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                 ),
               ),
+              const SizedBox(height: 120), // Added safety padding for the dynamic island nav bar
             ],
           ),
         ),
@@ -165,22 +165,32 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _ProfileInfoRow extends StatelessWidget {
+class _ProfileItem extends StatelessWidget {
   final String label;
   final String value;
-  const _ProfileInfoRow({required this.label, required this.value});
+  final IconData icon;
+
+  const _ProfileItem({required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 24),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
-          const Divider(),
+          Icon(icon, color: AppColors.textSecondary, size: 20),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+          ),
         ],
       ),
     );

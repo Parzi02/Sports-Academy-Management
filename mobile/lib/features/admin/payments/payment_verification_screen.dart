@@ -33,7 +33,7 @@ class PaymentVerificationScreen extends ConsumerWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
             itemCount: payments.length,
             itemBuilder: (context, index) {
               final pay = payments[index];
