@@ -69,9 +69,8 @@ class AdminShellScreen extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
+        decoration: const BoxDecoration(
+          color: Colors.transparent,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -23,7 +23,7 @@ class _SelfAttendanceButtonState extends ConsumerState<_SelfAttendanceButton> {
   bool _isLoading = false;
 
   Future<void> _markAttendance() async {
-    final File? pickedFile = await Navigator.of(context).push(
+    final File? pickedFile = await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(builder: (_) => const CustomCameraScreen()),
     );
 

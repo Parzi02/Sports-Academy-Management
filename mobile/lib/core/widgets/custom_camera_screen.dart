@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:intl/intl.dart';
 
 class CustomCameraScreen extends StatefulWidget {
   const CustomCameraScreen({super.key});
@@ -15,6 +18,9 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
   bool _isReady = false;
   XFile? _capturedFile;
 
+  int _currentCameraIndex = 0;
+  bool _isProcessingImage = false;
+
   @override
   void initState() {
     super.initState();
@@ -25,24 +31,39 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     try {
       _cameras = await availableCameras();
       
-      // Find the front camera
-      final frontCamera = _cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.front,
-        orElse: () => _cameras.first, // fallback
-      );
+      // Default to front camera
+      _currentCameraIndex = _cameras.indexWhere((c) => c.lensDirection == CameraLensDirection.front);
+      if (_currentCameraIndex == -1) _currentCameraIndex = 0;
 
-      _controller = CameraController(
-        frontCamera,
-        ResolutionPreset.medium,
-        enableAudio: false,
-      );
-
-      await _controller!.initialize();
-      if (!mounted) return;
-      setState(() => _isReady = true);
+      await _setCamera(_currentCameraIndex);
     } catch (e) {
       debugPrint('Error initializing camera: $e');
     }
+  }
+
+  Future<void> _setCamera(int index) async {
+    if (_cameras.isEmpty) return;
+    
+    if (_controller != null) {
+      await _controller!.dispose();
+    }
+
+    _controller = CameraController(
+      _cameras[index],
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await _controller!.initialize();
+    if (!mounted) return;
+    setState(() => _isReady = true);
+  }
+
+  void _flipCamera() {
+    if (_cameras.isEmpty) return;
+    setState(() => _isReady = false);
+    _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
+    _setCamera(_currentCameraIndex);
   }
 
   Future<void> _takePicture() async {
@@ -53,9 +74,73 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
     try {
       final XFile picture = await _controller!.takePicture();
       if (!mounted) return;
-      setState(() => _capturedFile = picture);
+
+      setState(() => _isProcessingImage = true);
+
+      // Read image
+      final bytes = await picture.readAsBytes();
+      final ui.Codec codec = await ui.instantiateImageCodec(bytes);
+      final ui.FrameInfo frameInfo = await codec.getNextFrame();
+      final ui.Image image = frameInfo.image;
+
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
+      final Canvas canvas = Canvas(recorder);
+      
+      canvas.drawImage(image, Offset.zero, Paint());
+
+      // Draw timestamp
+      String dateText = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      String timeText = DateFormat('HH:mm:ss').format(DateTime.now());
+
+      final textSpan = TextSpan(
+        text: '$dateText\n$timeText',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 64, // Large font for camera resolution
+          fontWeight: FontWeight.bold,
+          height: 1.2,
+          shadows: [
+            Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(4, 4)),
+            Shadow(color: Colors.black87, blurRadius: 2, offset: Offset(2, 2)),
+          ],
+        ),
+      );
+
+      final textPainter = TextPainter(
+        text: textSpan,
+        textAlign: TextAlign.right,
+        textDirection: ui.TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      // Position bottom right
+      final x = image.width.toDouble() - textPainter.width - 40;
+      final y = image.height.toDouble() - textPainter.height - 40;
+
+      textPainter.paint(canvas, Offset(x, y));
+
+      final ui.Picture p = recorder.endRecording();
+      final ui.Image finalImage = await p.toImage(image.width, image.height);
+      final ByteData? byteData = await finalImage.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData != null) {
+        final newPath = picture.path.replaceAll('.jpg', '_stamped.png');
+        final file = File(newPath);
+        await file.writeAsBytes(byteData.buffer.asUint8List());
+
+        setState(() {
+          _capturedFile = XFile(newPath);
+          _isProcessingImage = false;
+        });
+      } else {
+        setState(() {
+          _capturedFile = picture;
+          _isProcessingImage = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error taking picture: $e');
+      if (mounted) setState(() => _isProcessingImage = false);
     }
   }
 
@@ -113,6 +198,15 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ),
+            
+          // Flip camera button (REMOVED FROM TOP)
+          
+          if (_isProcessingImage)
+            const Positioned.fill(
+              child: Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+            ),
           
           // Bottom Controls
           Positioned(
@@ -127,7 +221,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.2),
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -154,28 +248,41 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
                     ),
                   ],
                 )
-              : Center(
-                  child: GestureDetector(
-                    onTap: _takePicture,
-                    child: Container(
-                      height: 80,
-                      width: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
-                      ),
-                      child: Center(
-                        child: Container(
-                          height: 60,
-                          width: 60,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+              : Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Shutter Button
+                    GestureDetector(
+                      onTap: _takePicture,
+                      child: Container(
+                        height: 80,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                        ),
+                        child: Center(
+                          child: Container(
+                            height: 60,
+                            width: 60,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                    // Flip Camera Button to the right
+                    if (_cameras.length > 1)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          icon: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 32),
+                          onPressed: _flipCamera,
+                        ),
+                      ),
+                  ],
                 ),
           ),
         ],

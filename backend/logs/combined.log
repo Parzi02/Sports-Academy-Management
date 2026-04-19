@@ -49,3 +49,10 @@
 {"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:45:42"}
 {"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-08 21:46:38"}
 {"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-08 22:08:26"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-09 11:14:22"}
+{"level":"info","message":"[MOCK] OTP for 911122334455 is 1234","service":"academy-backend","timestamp":"2026-04-09 11:18:46"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-09 11:20:50"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-16 19:37:48"}
+{"level":"info","message":"[MOCK] OTP for 919876543211 is 1234","service":"academy-backend","timestamp":"2026-04-16 19:47:20"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 11:20:23"}
+{"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-19 11:47:19"}
