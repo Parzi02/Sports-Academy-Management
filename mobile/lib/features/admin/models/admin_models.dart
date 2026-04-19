@@ -42,6 +42,8 @@ class AdminMember {
   final String? profilePhotoBase64;
   final String? coachId;
   final String? coachName;
+  final String? paymentStatus;
+  final String? membershipEndDate;
 
   AdminMember({
     required this.id,
@@ -52,6 +54,8 @@ class AdminMember {
     this.profilePhotoBase64,
     this.coachId,
     this.coachName,
+    this.paymentStatus,
+    this.membershipEndDate,
   });
 
   factory AdminMember.fromJson(Map<String, dynamic> json) {
@@ -64,6 +68,8 @@ class AdminMember {
       profilePhotoBase64: json['profile_photo_base64']?.toString(),
       coachId: json['coach_id']?.toString(),
       coachName: json['coach_name']?.toString(),
+      paymentStatus: json['payment_status']?.toString(),
+      membershipEndDate: json['membership_end_date']?.toString(),
     );
   }
 }

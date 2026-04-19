@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/storage/storage_service.dart';
+
 // UserModel placeholder
 class UserModel {
   final String id;
@@ -76,6 +78,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
   Future<void> logout() async {
     await ref.read(secureStorageProvider).delete(key: 'jwt_token');
+    await ref.read(storageServiceProvider).clearAll();
     state = const AsyncValue.data(null);
   }
 }

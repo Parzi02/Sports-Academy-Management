@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../models/admin_models.dart';
 import '../providers/admin_providers.dart';
 import '../repositories/admin_repository.dart';
 
@@ -11,39 +12,167 @@ class PaymentVerificationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(
+          title: const Text('Fees Pending Page'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          bottom: const TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(text: 'Fee Status'),
+              Tab(text: 'Approvals'),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: AppColors.primary),
+              onPressed: () {
+                ref.invalidate(adminPendingPaymentsProvider);
+                ref.invalidate(adminMembersProvider);
+              },
+            ),
+          ],
+        ),
+        body: const TabBarView(
+          children: [
+            _FeeStatusTab(),
+            _ApprovalsTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeeStatusTab extends ConsumerWidget {
+  const _FeeStatusTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final membersState = ref.watch(adminMembersProvider);
+
+    return membersState.when(
+      data: (members) {
+        final paid = members.where((m) => m.paymentStatus == 'paid').toList();
+        final unpaid = members.where((m) => m.paymentStatus != 'paid').toList();
+
+        if (members.isEmpty) {
+          return const Center(child: Text('No students assigned to you.'));
+        }
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (unpaid.isNotEmpty) ...[
+              _buildSectionHeader('DUE FEES (${unpaid.length})', Colors.red),
+              ...unpaid.map((m) => _MemberFeeCard(member: m, isDue: true)),
+              const SizedBox(height: 24),
+            ],
+            if (paid.isNotEmpty) ...[
+              _buildSectionHeader('PAID (${paid.length})', AppColors.success),
+              ...paid.map((m) => _MemberFeeCard(member: m, isDue: false)),
+            ],
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, __) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _MemberFeeCard extends StatelessWidget {
+  final AdminMember member;
+  final bool isDue;
+
+  const _MemberFeeCard({required this.member, required this.isDue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: AppColors.surface,
+          backgroundImage: member.profilePhotoBase64 != null && member.profilePhotoBase64!.isNotEmpty
+              ? MemoryImage(base64Decode(member.profilePhotoBase64!))
+              : const AssetImage('assets/images/default_avatar.jpg') as ImageProvider,
+        ),
+        title: Text(member.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('SID: ${member.memberId} • ${member.phone}', style: const TextStyle(fontSize: 12)),
+            if (member.membershipEndDate != null)
+              Text(
+                'Ends: ${DateFormat('dd MMM yyyy').format(DateTime.parse(member.membershipEndDate!))}',
+                style: TextStyle(color: isDue ? Colors.red : AppColors.textSecondary, fontSize: 11),
+              ),
+          ],
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: (isDue ? Colors.red : AppColors.success).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            isDue ? 'DUE' : 'PAID',
+            style: TextStyle(color: isDue ? Colors.red : AppColors.success, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ApprovalsTab extends ConsumerWidget {
+  const _ApprovalsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final pendingState = ref.watch(adminPendingPaymentsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: const Text('Pending Payments'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primary),
-            onPressed: () => ref.invalidate(adminPendingPaymentsProvider),
-          ),
-        ],
-      ),
-      body: pendingState.when(
-        data: (payments) {
-          if (payments.isEmpty) {
-            return const Center(child: Text('No pending verifications.'));
-          }
+    return pendingState.when(
+      data: (payments) {
+        if (payments.isEmpty) {
+          return const Center(child: Text('No pending verifications.'));
+        }
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
-            itemCount: payments.length,
-            itemBuilder: (context, index) {
-              final pay = payments[index];
-              return _VerificationCard(payment: pay);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, __) => Center(child: Text('Error loading payments: $e')),
-      ),
+        return ListView.builder(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
+          itemCount: payments.length,
+          itemBuilder: (context, index) {
+            final pay = payments[index];
+            return _VerificationCard(payment: pay);
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, __) => Center(child: Text('Error loading payments: $e')),
     );
   }
 }

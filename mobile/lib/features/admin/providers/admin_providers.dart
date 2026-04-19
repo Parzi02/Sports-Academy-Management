@@ -10,19 +10,19 @@ final adminDashboardProvider = FutureProvider.autoDispose<DashboardStats>((ref) 
 });
 
 // Batches Provider
-final adminBatchesProvider = FutureProvider<List<AdminBatch>>((ref) async {
+final adminBatchesProvider = FutureProvider.autoDispose<List<AdminBatch>>((ref) async {
   final repo = ref.watch(adminRepositoryProvider);
   return repo.getBatches();
 });
 
 // Events Provider
-final adminEventsProvider = FutureProvider<List<AdminEvent>>((ref) async {
+final adminEventsProvider = FutureProvider.autoDispose<List<AdminEvent>>((ref) async {
   final repo = ref.watch(adminRepositoryProvider);
   return repo.getEvents();
 });
 
 // Coaches Provider
-final adminCoachesProvider = FutureProvider<List<AdminCoach>>((ref) async {
+final adminCoachesProvider = FutureProvider.autoDispose<List<AdminCoach>>((ref) async {
   final repo = ref.watch(adminRepositoryProvider);
   return repo.getCoaches();
 });
@@ -55,7 +55,7 @@ class AdminProfileNotifier extends StateNotifier<AsyncValue<AdminProfileData>> {
   }
 }
 
-final adminProfileProvider = StateNotifierProvider<AdminProfileNotifier, AsyncValue<AdminProfileData>>((ref) {
+final adminProfileProvider = StateNotifierProvider.autoDispose<AdminProfileNotifier, AsyncValue<AdminProfileData>>((ref) {
   return AdminProfileNotifier(ref.watch(adminRepositoryProvider));
 });
 
@@ -89,12 +89,12 @@ class AdminMembersNotifier extends StateNotifier<AsyncValue<List<AdminMember>>> 
   }
 }
 
-final adminMembersProvider = StateNotifierProvider<AdminMembersNotifier, AsyncValue<List<AdminMember>>>((ref) {
+final adminMembersProvider = StateNotifierProvider.autoDispose<AdminMembersNotifier, AsyncValue<List<AdminMember>>>((ref) {
   return AdminMembersNotifier(ref.watch(adminRepositoryProvider));
 });
 
 // Single Member Profile Provider
-final adminMemberProfileProvider = FutureProvider.family<AdminMemberProfile, String>((ref, id) async {
+final adminMemberProfileProvider = FutureProvider.autoDispose.family<AdminMemberProfile, String>((ref, id) async {
   final repo = ref.watch(adminRepositoryProvider);
   return repo.getMemberProfile(id);
 });
@@ -112,7 +112,7 @@ final attendanceSearchQueryProvider = StateProvider<String>((ref) => '');
 final attendanceStatusFilterProvider = StateProvider<String>((ref) => 'All');
 
 // Marked Days Provider (Green highlight dates)
-final adminMarkedDaysProvider = FutureProvider<List<String>>((ref) async {
+final adminMarkedDaysProvider = FutureProvider.autoDispose<List<String>>((ref) async {
   final repo = ref.watch(adminRepositoryProvider);
   final now = DateTime.now();
   final start = DateTime(now.year, now.month - 1, 1);

@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const logger = require('../config/logger');
+const ocrService = require('../services/ocr.service');
 
 // Member: Submit Payment Proof
 exports.submitPayment = async (req, res, next) => {
@@ -14,14 +15,18 @@ exports.submitPayment = async (req, res, next) => {
             throw error;
         }
 
+        // Detect payment app from screenshot
+        const paymentMethod = await ocrService.detectPaymentApp(screenshotBase64);
+        logger.info(`Detected payment method: ${paymentMethod}`);
+
         // Insert new payment with pending status
         const insertQuery = `
-            INSERT INTO payments (member_id, amount, plan_type, utr_number, screenshot_base64, status) 
-            VALUES ($1, $2, $3, $4, $5, 'pending')
-            RETURNING id, amount, plan_type, status
+            INSERT INTO payments (member_id, amount, plan_type, utr_number, screenshot_base64, status, payment_method) 
+            VALUES ($1, $2, $3, $4, $5, 'pending', $6)
+            RETURNING id, amount, plan_type, status, payment_method
         `;
         const result = await db.query(insertQuery, [
-            req.user.id, amount, planType, utrNumber, screenshotBase64
+            req.user.id, amount, planType, utrNumber, screenshotBase64, paymentMethod
         ]);
 
         res.status(201).json({ 
@@ -57,10 +62,10 @@ exports.getPendingPayments = async (req, res, next) => {
                    u.name as member_name, u.phone as member_phone, u.member_id as member_sid
             FROM payments p
             JOIN members u ON p.member_id = u.id
-            WHERE p.status = 'pending' AND u.branch_id = $1
+            WHERE p.status = 'pending' AND u.branch_id = $1 AND u.coach_id = $2
             ORDER BY p.created_at ASC
         `;
-        const result = await db.query(query, [req.branchId]);
+        const result = await db.query(query, [req.branchId, req.user.id]);
         res.json(result.rows);
     } catch (error) {
         next(error);

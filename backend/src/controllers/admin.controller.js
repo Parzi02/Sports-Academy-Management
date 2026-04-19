@@ -53,8 +53,8 @@ exports.updateProfile = async (req, res, next) => {
 exports.getDashboardStats = async (req, res, next) => {
   try {
     const membersCount = await db.query(
-      'SELECT COUNT(*) FROM members WHERE branch_id = $1',
-      [req.branchId]
+      'SELECT COUNT(*) FROM members WHERE branch_id = $1 AND coach_id = $2',
+      [req.branchId, req.user.id]
     );
     const eventsCount = await db.query(
       'SELECT COUNT(*) FROM events WHERE branch_id = $1',
@@ -77,9 +77,11 @@ exports.getMembers = async (req, res, next) => {
     let query = `
       SELECT 
         u.id, u.name, u.phone, u.member_id, u.profile_photo_base64,
-        u.coach_id, c.name as coach_name
+        u.coach_id, c.name as coach_name,
+        e.payment_status, e.end_date as membership_end_date
       FROM members u
       LEFT JOIN coaches c ON u.coach_id = c.id
+      LEFT JOIN enrollments e ON u.id = e.member_id
       WHERE u.branch_id = $1 AND u.coach_id = $2
     `;
     const params = [req.branchId, req.user.id];

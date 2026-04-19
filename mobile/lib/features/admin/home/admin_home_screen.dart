@@ -71,7 +71,7 @@ class AdminHomeScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: _StatCard(
-                            label: 'Total Members',
+                            label: 'My Students',
                             value: stats.totalMembers.toString(),
                             icon: Icons.people_outline,
                             color: AppColors.primary,

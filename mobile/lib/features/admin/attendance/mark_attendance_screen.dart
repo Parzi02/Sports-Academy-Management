@@ -144,7 +144,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
           Positioned(
             left: 24,
             right: 24,
-            bottom: 110, // 2px above the navigation pill (Shell uses ~100px bottom zone)
+            bottom: 124, // 4px above the navigation pill (Shell uses ~120px bottom zone)
             child: SizedBox(
                height: 56,
                width: double.infinity,

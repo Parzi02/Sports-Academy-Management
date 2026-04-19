@@ -92,3 +92,31 @@
 {"level":"info","message":"[MOCK] OTP for 919876543212 is 1234","service":"academy-backend","timestamp":"2026-04-19 14:56:53"}
 {"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:56:57"}
 {"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:59:24"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 22:21:08"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 22:24:25"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 22:35:02"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 22:44:13"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 22:44:31"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:20:09"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 23:22:27"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:25:05"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:29:49"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 23:30:45"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 23:30:56"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:33:16"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:34:29"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 23:34:42"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-19 23:36:38"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-19 23:45:49"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-19 23:45:56"}
+{"level":"info","message":"[CRON] Starting event cleanup...","service":"academy-backend","timestamp":"2026-04-20 00:00:00"}
+{"level":"info","message":"[CRON] Starting payment screenshot cleanup...","service":"academy-backend","timestamp":"2026-04-20 00:00:00"}
+{"level":"info","message":"[CRON] Event cleanup completed. Rows affected: 0","service":"academy-backend","timestamp":"2026-04-20 00:00:00"}
+{"level":"info","message":"[CRON] Payment cleanup completed. Rows affected: 1","service":"academy-backend","timestamp":"2026-04-20 00:00:00"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:07:27"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:07:53"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:08:10"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:08:24"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:08:34"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:11:01"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:11:53"}

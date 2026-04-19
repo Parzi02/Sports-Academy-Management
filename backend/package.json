@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.2.1",
     "pg": "^8.20.0",
+    "tesseract.js": "^7.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
