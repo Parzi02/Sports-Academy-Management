@@ -56,16 +56,67 @@ class MembersScreen extends ConsumerWidget {
                 if (members.isEmpty) {
                   return const Center(child: Text('No members found'));
                 }
-                return GridView.builder(
-                  padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.85,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: members.length,
-                  itemBuilder: (context, index) => _MemberCard(member: members[index]),
+
+                // Group members by Coach Name
+                final Map<String, List<AdminMember>> grouped = {};
+                for (final member in members) {
+                  final coach = member.coachName ?? 'Unassigned';
+                  grouped.putIfAbsent(coach, () => []).add(member);
+                }
+
+                final coachNames = grouped.keys.toList()..sort();
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 120),
+                  itemCount: coachNames.length,
+                  itemBuilder: (context, coachIndex) {
+                    final coachName = coachNames[coachIndex];
+                    final coachMembers = grouped[coachName]!;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'COACH: ${coachName.toUpperCase()}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.85,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                          itemCount: coachMembers.length,
+                          itemBuilder: (context, index) => _MemberCard(member: coachMembers[index]),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -75,7 +126,7 @@ class MembersScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: 106),
         child: FloatingActionButton.extended(
           onPressed: () => _showAddMember(context),
           backgroundColor: AppColors.primary,
@@ -155,6 +206,7 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
   final _emailController = TextEditingController();
   DateTime? _selectedDob;
   String? _selectedBatchId;
+  String? _selectedCoachId;
   String? _selectedMembershipType;
   String? _selectedGender;
   String? _profilePhotoBase64;
@@ -194,6 +246,7 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
   @override
   Widget build(BuildContext context) {
     final batchesState = ref.watch(adminBatchesProvider);
+    final coachesState = ref.watch(adminCoachesProvider);
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -257,7 +310,20 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
               TextField(controller: _addressController, decoration: const InputDecoration(labelText: 'Address')),
               const SizedBox(height: 32),
               
-              const _FormSection(title: 'Training Details'),
+              const _FormSection(title: 'Training & Coach'),
+              
+              coachesState.when(
+                data: (coaches) => DropdownButtonFormField<String>(
+                  value: _selectedCoachId,
+                  decoration: const InputDecoration(labelText: 'Select Main Coach *'),
+                  items: coaches.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
+                  onChanged: (val) => setState(() => _selectedCoachId = val),
+                  isExpanded: true,
+                ),
+                loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator())),
+                error: (e, st) => Text('Error loading coaches: $e'),
+              ),
+              const SizedBox(height: 16),
               
               batchesState.when(
                 data: (batches) => DropdownButtonFormField<String>(
@@ -286,8 +352,8 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (_nameController.text.isEmpty || _selectedBatchId == null || _selectedMembershipType == null || _selectedDob == null) {
-                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields')));
+                    if (_nameController.text.isEmpty || _selectedBatchId == null || _selectedCoachId == null || _selectedMembershipType == null || _selectedDob == null) {
+                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields, including Coach')));
                        return;
                     }
                     
@@ -301,6 +367,7 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
                         'gender': _selectedGender?.toLowerCase() ?? 'other',
                         'address': _addressController.text,
                         'batch_id': _selectedBatchId,
+                        'coach_id': _selectedCoachId,
                         'membership_type': _selectedMembershipType,
                         'profile_photo_base64': _profilePhotoBase64,
                       });

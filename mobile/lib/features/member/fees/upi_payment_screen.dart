@@ -13,7 +13,14 @@ import '../repositories/member_repository.dart';
 
 class UpiPaymentScreen extends ConsumerStatefulWidget {
   final String initialPlan;
-  const UpiPaymentScreen({super.key, required this.initialPlan});
+  final String coachUpiId;
+  final String coachName;
+  const UpiPaymentScreen({
+    super.key, 
+    required this.initialPlan,
+    required this.coachUpiId,
+    required this.coachName,
+  });
 
   @override
   ConsumerState<UpiPaymentScreen> createState() => _UpiPaymentScreenState();
@@ -36,9 +43,9 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
     _selectedPlan = widget.initialPlan.toLowerCase();
   }
 
-  // Using centralized merchant details from AppConstants
-  final String _targetUpiId = AppConstants.merchantUpiId;
-  final String _merchantName = AppConstants.merchantName;
+  // Using coach details passed from the dashboard
+  String get _targetUpiId => widget.coachUpiId;
+  String get _merchantName => widget.coachName;
 
   Future<void> _initiatePayment() async {
     final amount = _planPrices[_selectedPlan]!;
@@ -88,24 +95,9 @@ class _UpiPaymentScreenState extends ConsumerState<UpiPaymentScreen> {
         final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
         
         final fullText = recognizedText.text.toLowerCase();
-        final merchantName = AppConstants.merchantName.toLowerCase();
+        // 1. Validate Amount
         final expectedAmount = _planPrices[_selectedPlan]!.toStringAsFixed(0); // Look for whole number part at least
         
-        // 1. Validate Merchant Name
-        if (!fullText.contains(merchantName)) {
-           if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Verification Failed: Merchant name "$merchantName" not found in screenshot.'),
-                backgroundColor: AppColors.alert,
-              ),
-            );
-          }
-          setState(() => _screenshot = null); // Strict blocking: remove screenshot
-          return;
-        }
-
-        // 2. Validate Amount
         if (!fullText.contains(expectedAmount)) {
            if (mounted) {
              ScaffoldMessenger.of(context).showSnackBar(

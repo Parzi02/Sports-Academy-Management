@@ -80,6 +80,12 @@ class AdminRepository {
     return data.map((e) => AdminBatch.fromJson(e)).toList();
   }
 
+  Future<List<AdminCoach>> getCoaches() async {
+    final response = await _client.get('/admin/coaches');
+    final List data = response.data;
+    return data.map((e) => AdminCoach.fromJson(e)).toList();
+  }
+
   Future<List<AdminEvent>> getEvents() async {
     try {
       final response = await _client.get('/admin/events');

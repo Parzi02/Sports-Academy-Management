@@ -65,14 +65,10 @@ class AdminProfileScreen extends ConsumerWidget {
               _ProfileItem(label: 'Email Address', value: profile.email.isNotEmpty ? profile.email : 'Not Provided', icon: Icons.email_outlined),
               _ProfileItem(label: 'Phone Number', value: profile.phone, icon: Icons.phone_outlined),
               _ProfileItem(label: 'Branch', value: profile.branchName, icon: Icons.location_on_outlined),
+              _ProfileItem(label: 'UPI ID (For Fees)', value: profile.upiId ?? 'Not Provided', icon: Icons.account_balance_wallet_outlined),
               _ProfileItem(label: 'Address', value: profile.address.isNotEmpty ? profile.address : 'Not Provided', icon: Icons.home_work_outlined),
               const SizedBox(height: 48),
-              ListTile(
-                onTap: () {},
-                leading: const Icon(Icons.settings_outlined),
-                title: const Text('Account Settings'),
-                trailing: const Icon(Icons.chevron_right),
-              ),
+
               ListTile(
                 onTap: () {},
                 leading: const Icon(Icons.security_outlined),

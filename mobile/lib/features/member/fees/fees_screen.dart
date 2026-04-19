@@ -10,10 +10,10 @@ import 'upi_payment_screen.dart';
 class FeesScreen extends ConsumerWidget {
   const FeesScreen({super.key});
 
-  Future<void> _launchUPI(BuildContext context, String planType) async {
+  Future<void> _launchUPI(BuildContext context, String planType, String upiId, String merchantName) async {
     final amount = AppConstants.membershipPrices[planType.toLowerCase()] ?? 0.0;
     final txnId = 'TXN${DateTime.now().millisecondsSinceEpoch}';
-    final url = 'upi://pay?pa=${AppConstants.merchantUpiId}&pn=${AppConstants.merchantName}&tr=$txnId&am=$amount&cu=INR';
+    final url = 'upi://pay?pa=$upiId&pn=$merchantName&tr=$txnId&am=$amount&cu=INR';
 
     try {
       final uri = Uri.parse(url);
@@ -90,9 +90,20 @@ class FeesScreen extends ConsumerWidget {
                         membershipType: data.membershipType,
                         dueDate: data.dueDate,
                         onPay: () async {
-                           await _launchUPI(context, data.membershipType);
+                           if (data.coachUpiId == null || data.coachUpiId!.isEmpty) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               const SnackBar(content: Text('Payment failure: Your assigned coach has no UPI ID set. Please contact the academy.'), backgroundColor: AppColors.alert),
+                             );
+                             return;
+                           }
+                           
+                           await _launchUPI(context, data.membershipType, data.coachUpiId!, data.coachName);
                            if (context.mounted) {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => UpiPaymentScreen(initialPlan: data.membershipType)));
+                               Navigator.push(context, MaterialPageRoute(builder: (_) => UpiPaymentScreen(
+                                 initialPlan: data.membershipType,
+                                 coachUpiId: data.coachUpiId!,
+                                 coachName: data.coachName,
+                               )));
                            }
                         },
                       );

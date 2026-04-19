@@ -56,7 +56,7 @@ exports.getPendingPayments = async (req, res, next) => {
             SELECT p.id, p.amount, p.plan_type, p.utr_number, p.status, p.created_at, p.screenshot_base64,
                    u.name as member_name, u.phone as member_phone, u.member_id as member_sid
             FROM payments p
-            JOIN users u ON p.member_id = u.id
+            JOIN members u ON p.member_id = u.id
             WHERE p.status = 'pending' AND u.branch_id = $1
             ORDER BY p.created_at ASC
         `;
@@ -85,7 +85,7 @@ exports.updatePaymentStatus = async (req, res, next) => {
         const checkQuery = `
             SELECT p.member_id, p.plan_type 
             FROM payments p
-            JOIN users u ON p.member_id = u.id
+            JOIN members u ON p.member_id = u.id
             WHERE p.id = $1 AND u.branch_id = $2
         `;
         const checkRes = await db.query(checkQuery, [id, req.branchId]);

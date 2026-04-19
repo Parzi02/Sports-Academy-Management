@@ -14,6 +14,7 @@ router.put('/profile', adminController.updateProfile);
 router.get('/dashboard', adminController.getDashboardStats);
 router.get('/members', adminController.getMembers);
 router.get('/members/:id', adminController.getMemberById);
+router.get('/coaches', adminController.getCoaches);
 router.get('/payments/pending', paymentController.getPendingPayments);
 router.put('/payments/approve/:id', paymentController.updatePaymentStatus);
 router.get('/batches', adminController.getBatches);

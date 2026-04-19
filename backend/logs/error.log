@@ -7,3 +7,7 @@
 {"level":"error","message":"invalid input syntax for type uuid: \"0\" - POST /api/admin/members - ::ffff:192.168.0.9","service":"academy-backend","timestamp":"2026-04-07 15:17:06"}
 {"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-08 21:09:07"}
 {"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-08 21:09:13"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:33"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:36"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:37"}
+{"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:54:11"}

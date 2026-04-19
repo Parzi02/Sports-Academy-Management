@@ -4,12 +4,14 @@ const logger = require('../config/logger');
 // Admin Profile
 exports.getProfile = async (req, res, next) => {
   try {
+    const table = req.user.role === 'admin' ? 'coaches' : 'members';
     const query = `
-      SELECT u.id, u.name, u.email, u.phone, u.address, u.profile_photo_base64, b.name as branch_name
-      FROM users u
+      SELECT u.id, u.name, u.email, u.phone, u.address, u.profile_photo_base64, u.upi_id, b.name as branch_name
+      FROM ${table} u
       LEFT JOIN branches b ON u.branch_id = b.id
       WHERE u.id = $1
     `;
+    logger.info(`Fetching profile for ${req.user.role} ID: ${req.user.id}`);
     const result = await db.query(query, [req.user.id]);
     if (result.rows.length === 0) {
       const error = new Error('Profile not found');
@@ -26,15 +28,16 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { name, email, phone, address, profile_photo_base64 } = req.body;
     
+    const table = req.user.role === 'admin' ? 'coaches' : 'members';
     await db.query(`
-      UPDATE users 
+      UPDATE ${table} 
       SET name = $1, email = $2, phone = $3, address = $4, profile_photo_base64 = $5
       WHERE id = $6
     `, [name, email, phone, address, profile_photo_base64, req.user.id]);
 
     const selectQuery = `
-      SELECT u.id, u.name, u.email, u.phone, u.address, u.profile_photo_base64, b.name as branch_name
-      FROM users u
+      SELECT u.id, u.name, u.email, u.phone, u.address, u.profile_photo_base64, u.upi_id, b.name as branch_name
+      FROM ${table} u
       LEFT JOIN branches b ON u.branch_id = b.id
       WHERE u.id = $1
     `;
@@ -50,8 +53,8 @@ exports.updateProfile = async (req, res, next) => {
 exports.getDashboardStats = async (req, res, next) => {
   try {
     const membersCount = await db.query(
-      'SELECT COUNT(*) FROM users WHERE branch_id = $1 AND role = $2',
-      [req.branchId, 'member']
+      'SELECT COUNT(*) FROM members WHERE branch_id = $1',
+      [req.branchId]
     );
     const eventsCount = await db.query(
       'SELECT COUNT(*) FROM events WHERE branch_id = $1',
@@ -71,11 +74,18 @@ exports.getDashboardStats = async (req, res, next) => {
 exports.getMembers = async (req, res, next) => {
   const { search, batchId, status } = req.query;
   try {
-    let query = 'SELECT id, name, phone, member_id, role, profile_photo_base64 FROM users WHERE branch_id = $1 AND role = $2';
-    const params = [req.branchId, 'member'];
+    let query = `
+      SELECT 
+        u.id, u.name, u.phone, u.member_id, u.profile_photo_base64,
+        u.coach_id, c.name as coach_name
+      FROM members u
+      LEFT JOIN coaches c ON u.coach_id = c.id
+      WHERE u.branch_id = $1 AND u.coach_id = $2
+    `;
+    const params = [req.branchId, req.user.id];
 
     if (search) {
-      query += ` AND (name ILIKE $${params.length + 1} OR member_id ILIKE $${params.length + 1})`;
+      query += ` AND (u.name ILIKE $${params.length + 1} OR u.member_id ILIKE $${params.length + 1})`;
       params.push(`%${search}%`);
     }
 
@@ -91,12 +101,12 @@ exports.getMemberById = async (req, res, next) => {
     const { id } = req.params;
     
     // 1. Fetch Member Profile
-    const profileQuery = `
+        const profileQuery = `
       SELECT 
         u.id, u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
         e.start_date as date_of_joining, e.payment_status as status, e.membership_type,
         b.name as batch_name, b.start_time as batch_time
-      FROM users u
+      FROM members u
       LEFT JOIN enrollments e ON u.id = e.member_id
       LEFT JOIN batches b ON e.batch_id = b.id
       WHERE u.id = $1 AND u.branch_id = $2
@@ -156,7 +166,7 @@ exports.recordCashPayment = async (req, res, next) => {
         await db.query('BEGIN');
 
         // 1. Verify existence of member in admin's branch
-        const userCheck = await db.query('SELECT id FROM users WHERE id = $1 AND branch_id = $2', [id, req.branchId]);
+        const userCheck = await db.query('SELECT id FROM members WHERE id = $1 AND branch_id = $2', [id, req.branchId]);
         if (userCheck.rows.length === 0) {
             await db.query('ROLLBACK');
             const error = new Error('Member not found or access denied');
@@ -198,16 +208,21 @@ exports.recordCashPayment = async (req, res, next) => {
 };
 
 exports.addMember = async (req, res, next) => {
-
-    const { name, phone, email, dob, gender, address, batch_id, membership_type, profile_photo_base64 } = req.body;
+    const { name, phone, email, dob, gender, address, batch_id, coach_id, membership_type, profile_photo_base64 } = req.body;
     try {
+        if (!coach_id) {
+            const error = new Error('Coach assignment is required');
+            error.statusCode = 400;
+            throw error;
+        }
+
         await db.query('BEGIN');
         
-        // 1. Create User
+        // 1. Create Member
         const userRes = await db.query(
-            `INSERT INTO users (branch_id, phone, email, name, dob, gender, address, role, member_id, profile_photo_base64) 
+            `INSERT INTO members (branch_id, phone, email, name, dob, gender, address, member_id, profile_photo_base64, coach_id) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-            [req.branchId, phone, email, name, dob, gender, address, 'member', `MEM${Date.now().toString().slice(-4)}`, profile_photo_base64]
+            [req.branchId, phone, email, name, dob, gender, address, `MEM${Date.now().toString().slice(-4)}`, profile_photo_base64, coach_id]
         );
         const userId = userRes.rows[0].id;
 
@@ -278,8 +293,12 @@ exports.createEvent = async (req, res, next) => {
 exports.getBatches = async (req, res, next) => {
     try {
         const result = await db.query(
-            'SELECT id, name, sport, start_time, end_time FROM batches WHERE branch_id = $1',
-            [req.branchId]
+            `SELECT DISTINCT b.id, b.name, b.sport, b.start_time, b.end_time 
+             FROM batches b 
+             JOIN enrollments e ON b.id = e.batch_id 
+             JOIN members m ON e.member_id = m.id 
+             WHERE b.branch_id = $1 AND m.coach_id = $2`,
+            [req.branchId, req.user.id]
         );
         res.json(result.rows);
     } catch (error) {
@@ -312,17 +331,17 @@ exports.getAttendance = async (req, res, next) => {
             throw error;
         }
 
-        const result = await db.query(
+         const result = await db.query(
             `SELECT 
                 u.id, 
                 u.name, 
                 u.member_id,
                 a.status
              FROM enrollments e
-             JOIN users u ON e.member_id = u.id
+             JOIN members u ON e.member_id = u.id
              LEFT JOIN attendance a ON u.id = a.member_id AND a.batch_id = $1 AND a.date = $2
-             WHERE e.batch_id = $1 AND u.branch_id = $3`,
-            [batchId, date, req.branchId]
+             WHERE e.batch_id = $1 AND u.branch_id = $3 AND u.coach_id = $4`,
+            [batchId, date, req.branchId, req.user.id]
         );
         res.json(result.rows);
     } catch (error) {
@@ -340,8 +359,8 @@ exports.updateMemberEnrollment = async (req, res, next) => {
 
         // Security Check: Verify member belongs to admin's branch
         const memberCheck = await db.query(
-            'SELECT id FROM users WHERE id = $1 AND branch_id = $2 AND role = $3',
-            [id, req.branchId, 'member']
+            'SELECT id FROM members WHERE id = $1 AND branch_id = $2',
+            [id, req.branchId]
         );
 
         if (memberCheck.rows.length === 0) {
@@ -399,3 +418,17 @@ exports.getMarkedDays = async (req, res, next) => {
     }
 };
 
+// Get Coaches List
+exports.getCoaches = async (req, res, next) => {
+    try {
+        const result = await db.query(
+            'SELECT id, name, phone, upi_id FROM coaches WHERE branch_id = $1',
+            [req.branchId]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = exports;

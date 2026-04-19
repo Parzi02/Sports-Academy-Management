@@ -11,6 +11,7 @@ class MemberDashboardData {
   final bool isAttendanceMarkedToday;
   final bool isPaymentPending;
   final String? dueDate;
+  final String? coachUpiId;
   final List<TodaySchedule>? todaySchedule;
 
   MemberDashboardData({
@@ -26,6 +27,7 @@ class MemberDashboardData {
     required this.sport,
     required this.coachName,
     this.dueDate,
+    this.coachUpiId,
     this.todaySchedule,
   });
 
@@ -43,6 +45,7 @@ class MemberDashboardData {
       sport: json['sport']?.toString() ?? 'Academy Training',
       coachName: json['coachName']?.toString() ?? 'Assigned',
       dueDate: json['dueDate'],
+      coachUpiId: json['coachUpiId'],
       todaySchedule: (json['todaySchedule'] as List?)
           ?.map((e) => TodaySchedule.fromJson(e))
           .toList(),

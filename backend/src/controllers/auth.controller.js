@@ -41,9 +41,14 @@ exports.verifyOtp = async (req, res, next) => {
       }
     }
 
-    // 2. Fetch User from DB (Match last 10 digits to handle optional 91 prefix)
-    const userRes = await db.query('SELECT * FROM users WHERE RIGHT(phone, 10) = RIGHT($1, 10)', [phone]);
-    const user = userRes.rows[0];
+    // 2. Fetch User from DB (Check coaches first, then members)
+    let userRes = await db.query('SELECT *, \'admin\' as role FROM coaches WHERE RIGHT(phone, 10) = RIGHT($1, 10)', [phone]);
+    let user = userRes.rows[0];
+
+    if (!user) {
+      userRes = await db.query('SELECT *, \'member\' as role FROM members WHERE RIGHT(phone, 10) = RIGHT($1, 10)', [phone]);
+      user = userRes.rows[0];
+    }
 
     if (!user) {
       const error = new Error('User not registered.');

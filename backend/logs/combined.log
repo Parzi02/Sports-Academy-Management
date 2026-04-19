@@ -56,3 +56,39 @@
 {"level":"info","message":"[MOCK] OTP for 919876543211 is 1234","service":"academy-backend","timestamp":"2026-04-16 19:47:20"}
 {"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 11:20:23"}
 {"level":"info","message":"[MOCK] OTP for 919988776655 is 1234","service":"academy-backend","timestamp":"2026-04-19 11:47:19"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:25:45"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:26:01"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:34:23"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:33"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:36"}
+{"level":"error","message":"Duplicate Submission: This UTR is already recorded. - POST /api/member/payments/submit - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:36:37"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:38:44"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:41:18"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:41:44"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:44:06"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:44:12"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:46:26"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-19 12:50:12"}
+{"level":"info","message":"[MOCK] OTP for 911234567891 is 1234","service":"academy-backend","timestamp":"2026-04-19 12:53:15"}
+{"level":"info","message":"[MOCK] OTP for 919876543212 is 1234","service":"academy-backend","timestamp":"2026-04-19 12:54:01"}
+{"level":"error","message":"Invalid OTP (Mock mode expects 1234). - POST /api/auth/verify-otp - ::ffff:192.168.1.5","service":"academy-backend","timestamp":"2026-04-19 12:54:11"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 12:59:22"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 13:02:30"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:04:10"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:06:32"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 13:09:39"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:10:05"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:12:45"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:13:13"}
+{"level":"info","message":"Fetching profile for user ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 13:13:31"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 13:33:32"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 14:39:17"}
+{"level":"info","message":"[MOCK] OTP for 919876543212 is 1234","service":"academy-backend","timestamp":"2026-04-19 14:39:45"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:39:49"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-19 14:48:50"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:54:10"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:54:46"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:55:11"}
+{"level":"info","message":"[MOCK] OTP for 919876543212 is 1234","service":"academy-backend","timestamp":"2026-04-19 14:56:53"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:56:57"}
+{"level":"info","message":"Fetching profile for admin ID: e67a773c-5687-44c9-969d-ad3694ee069a","service":"academy-backend","timestamp":"2026-04-19 14:59:24"}

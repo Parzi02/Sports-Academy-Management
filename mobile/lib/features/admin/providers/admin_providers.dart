@@ -21,6 +21,12 @@ final adminEventsProvider = FutureProvider<List<AdminEvent>>((ref) async {
   return repo.getEvents();
 });
 
+// Coaches Provider
+final adminCoachesProvider = FutureProvider<List<AdminCoach>>((ref) async {
+  final repo = ref.watch(adminRepositoryProvider);
+  return repo.getCoaches();
+});
+
 // Admin Profile State Management
 class AdminProfileNotifier extends StateNotifier<AsyncValue<AdminProfileData>> {
   final AdminRepository _repo;

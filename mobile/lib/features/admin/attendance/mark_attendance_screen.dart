@@ -14,14 +14,14 @@ class MarkAttendanceScreen extends ConsumerStatefulWidget {
 }
 
 class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
-  DateTime _selectedDate = DateTime.now();
-  String? _selectedBatchId;
   final Map<String, String> _attendanceMap = {}; // memberId -> 'present'/'absent'
 
   @override
   Widget build(BuildContext context) {
     final batchesState = ref.watch(adminBatchesProvider);
-    final membersState = ref.watch(adminMembersProvider);
+    final selectedDate = ref.watch(selectedAttendanceDateProvider);
+    final selectedBatchId = ref.watch(selectedAttendanceBatchIdProvider);
+    final attendanceState = ref.watch(attendanceListProvider);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -34,84 +34,134 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
         ),
         title: const Text('Mark Attendance', style: TextStyle(color: AppColors.textPrimary)),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Header with Selectors
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _Selector(
-                    label: 'Date',
-                    value: DateFormat('dd MMM yyyy').format(_selectedDate),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _selectedDate,
-                        firstDate: DateTime(2024),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null) setState(() => _selectedDate = picked);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: batchesState.when(
-                    data: (batches) => _Selector(
-                      label: 'Batch',
-                      value: batches.firstWhere((b) => b.id == _selectedBatchId, orElse: () => AdminBatch(id: '', name: 'Select', sport: '', startTime: '', endTime: '')).name,
-                      onTap: () => _showBatchPicker(context, batches),
+          Column(
+            children: [
+              // Header with Selectors
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _Selector(
+                        label: 'Date',
+                        value: DateFormat('dd MMM yyyy').format(selectedDate),
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2024),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            ref.read(selectedAttendanceDateProvider.notifier).state = picked;
+                          }
+                        },
+                      ),
                     ),
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, st) => Text('Error: $e'),
-                  ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: batchesState.when(
+                        data: (batches) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Batch', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: selectedBatchId,
+                                  isExpanded: true,
+                                  hint: const Text('Select', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  items: batches.map((b) => DropdownMenuItem(
+                                    value: b.id,
+                                    child: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                  )).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      ref.read(selectedAttendanceBatchIdProvider.notifier).state = val;
+                                    }
+                                  },
+                                  icon: const Icon(Icons.keyboard_arrow_down, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, st) => Text('Error: $e'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          
-          // List of Members from selected batch
-          Expanded(
-            child: membersState.when(
-              data: (members) {
-                // Filter members by role/batch if needed, currently showing all members for demo
-                // In real app, we might filter by enrollment in the selected batch
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  itemCount: members.length,
-                  itemBuilder: (context, index) {
-                    final member = members[index];
-                    return _MemberAttendanceItem(
-                      member: member,
-                      status: _attendanceMap[member.id],
-                      onStatusChanged: (status) {
-                        setState(() {
-                          _attendanceMap[member.id] = status;
-                        });
+              ),
+              
+              // List of Members from selected batch
+              Expanded(
+                child: attendanceState.when(
+                  data: (members) {
+                    if (selectedBatchId == null) {
+                      return const Center(child: Text('Please select a batch first'));
+                    }
+                    if (members.isEmpty) {
+                      return const Center(child: Text('No members found in this batch assigned to you'));
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 180),
+                      itemCount: members.length,
+                      itemBuilder: (context, index) {
+                        final member = members[index];
+                        // Initialize local map if needed OR just use a specialized notifier.
+                        // For simplicity, we'll keep local map but syncing it back.
+                        return _MemberAttendanceItem(
+                          member: member,
+                          status: _attendanceMap[member.id] ?? member.status,
+                          onStatusChanged: (status) {
+                            setState(() {
+                              _attendanceMap[member.id] = status;
+                            });
+                          },
+                        );
                       },
                     );
                   },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Error: $e')),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, st) => Center(child: Text('Error: $e')),
+                ),
+              ),
+            ],
+          ),
+
+          // Submit Button positioned 2px above navigation bar
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 110, // 2px above the navigation pill (Shell uses ~100px bottom zone)
+            child: SizedBox(
+               height: 56,
+               width: double.infinity,
+               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 8,
+                  shadowColor: AppColors.primary.withOpacity(0.5),
+                ),
+                onPressed: selectedBatchId == null || _attendanceMap.isEmpty ? null : () => _saveAttendance(selectedBatchId),
+                child: const Text('SUBMIT ATTENDANCE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              ),
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
-        ),
-        child: ElevatedButton(
-          onPressed: _selectedBatchId == null || _attendanceMap.isEmpty ? null : _saveAttendance,
-          child: const Text('SAVE ATTENDANCE'),
-        ),
       ),
     );
   }
@@ -121,12 +171,12 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
       context: context,
       builder: (context) => ListView(
         shrinkWrap: true,
-        padding: const EdgeInsets.only(bottom: 120),
+        padding: const EdgeInsets.only(bottom: 40),
         children: batches.map((b) => ListTile(
           title: Text(b.name),
           subtitle: Text(b.sport),
           onTap: () {
-            setState(() => _selectedBatchId = b.id);
+            ref.read(selectedAttendanceBatchIdProvider.notifier).state = b.id;
             Navigator.pop(context);
           },
         )).toList(),
@@ -134,7 +184,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
     );
   }
 
-  Future<void> _saveAttendance() async {
+  Future<void> _saveAttendance(String batchId) async {
     try {
       final List<Map<String, dynamic>> attendanceList = _attendanceMap.entries.map((e) => {
         'memberId': e.key,
@@ -142,8 +192,8 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
       }).toList();
 
       await ref.read(adminMarkAttendanceProvider).markAttendance(
-        batchId: _selectedBatchId!,
-        date: DateFormat('yyyy-MM-dd').format(_selectedDate),
+        batchId: batchId,
+        date: DateFormat('yyyy-MM-dd').format(ref.read(selectedAttendanceDateProvider)),
         attendanceList: attendanceList,
       );
 
@@ -193,7 +243,7 @@ class _Selector extends StatelessWidget {
 }
 
 class _MemberAttendanceItem extends StatelessWidget {
-  final AdminMember member;
+  final AttendanceMember member;
   final String? status;
   final Function(String) onStatusChanged;
 

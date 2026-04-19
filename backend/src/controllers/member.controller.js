@@ -20,12 +20,12 @@ exports.getDashboard = async (req, res, next) => {
         // Enrollment & Batch Info
         const enrollmentRes = await db.query(
             `SELECT e.payment_status, e.membership_type, e.end_date as due_date, 
-                    b.name as batch_name, b.sport, b.start_time, b.end_time, c.name as coach_name 
+                    b.name as batch_name, b.sport, b.start_time, b.end_time, 
+                    c.name as coach_name, c.upi_id as coach_upi_id
              FROM enrollments e 
              JOIN batches b ON e.batch_id = b.id 
-             LEFT JOIN users c ON b.coach_id = c.id
-             WHERE e.member_id = $1`,
-            [req.user.id]
+             LEFT JOIN coaches c ON b.coach_id = c.id
+             WHERE e.member_id = $1`, [req.user.id]
         );
         
         const enrollment = enrollmentRes.rows[0] || {};
@@ -65,6 +65,7 @@ exports.getDashboard = async (req, res, next) => {
             batchName: enrollment.batch_name || 'No Batch',
             sport: enrollment.sport || 'Academy Training',
             coachName: enrollment.coach_name || 'Assigned',
+            coachUpiId: enrollment.coach_upi_id || null,
             batchTime: enrollment.start_time ? `${enrollment.start_time} - ${enrollment.end_time}` : 'TBD',
             todaySchedule: todaySchedule
         });
@@ -192,10 +193,10 @@ exports.getProfile = async (req, res, next) => {
         const query = `
             SELECT u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
                    e.start_date as date_of_joining, b.sport, c.name as coach_name
-            FROM users u
+            FROM members u
             LEFT JOIN enrollments e ON u.id = e.member_id
             LEFT JOIN batches b ON e.batch_id = b.id
-            LEFT JOIN users c ON b.coach_id = c.id
+            LEFT JOIN coaches c ON b.coach_id = c.id
             WHERE u.id = $1
         `;
         const result = await db.query(query, [req.user.id]);
@@ -215,7 +216,7 @@ exports.updateProfile = async (req, res, next) => {
     const { name, phone, address, profilePhotoBase64 } = req.body;
     try {
         const updateQuery = `
-            UPDATE users 
+            UPDATE members 
             SET name = $1,
                 phone = $2,
                 address = $3,
@@ -229,10 +230,10 @@ exports.updateProfile = async (req, res, next) => {
         const profileQuery = `
             SELECT u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
                    e.start_date as date_of_joining, b.sport, c.name as coach_name
-            FROM users u
+            FROM members u
             LEFT JOIN enrollments e ON u.id = e.member_id
             LEFT JOIN batches b ON e.batch_id = b.id
-            LEFT JOIN users c ON b.coach_id = c.id
+            LEFT JOIN coaches c ON b.coach_id = c.id
             WHERE u.id = $1
         `;
         const result = await db.query(profileQuery, [req.user.id]);

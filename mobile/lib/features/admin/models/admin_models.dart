@@ -6,6 +6,7 @@ class AdminProfileData {
   final String address;
   final String? profilePhotoBase64;
   final String branchName;
+  final String? upiId;
 
   AdminProfileData({
     required this.id,
@@ -15,6 +16,7 @@ class AdminProfileData {
     required this.address,
     this.profilePhotoBase64,
     required this.branchName,
+    this.upiId,
   });
 
   factory AdminProfileData.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class AdminProfileData {
       address: json['address']?.toString() ?? '',
       profilePhotoBase64: json['profile_photo_base64']?.toString(),
       branchName: json['branch_name']?.toString() ?? '',
+      upiId: json['upi_id']?.toString(),
     );
   }
 }
@@ -37,6 +40,8 @@ class AdminMember {
   final String memberId;
   final String role;
   final String? profilePhotoBase64;
+  final String? coachId;
+  final String? coachName;
 
   AdminMember({
     required this.id,
@@ -45,6 +50,8 @@ class AdminMember {
     required this.memberId,
     required this.role,
     this.profilePhotoBase64,
+    this.coachId,
+    this.coachName,
   });
 
   factory AdminMember.fromJson(Map<String, dynamic> json) {
@@ -55,6 +62,28 @@ class AdminMember {
       memberId: json['member_id']?.toString() ?? '',
       role: json['role']?.toString() ?? '',
       profilePhotoBase64: json['profile_photo_base64']?.toString(),
+      coachId: json['coach_id']?.toString(),
+      coachName: json['coach_name']?.toString(),
+    );
+  }
+}
+
+class AdminCoach {
+  final String id;
+  final String name;
+  final String? upiId;
+
+  AdminCoach({
+    required this.id,
+    required this.name,
+    this.upiId,
+  });
+
+  factory AdminCoach.fromJson(Map<String, dynamic> json) {
+    return AdminCoach(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      upiId: json['upi_id']?.toString(),
     );
   }
 }
