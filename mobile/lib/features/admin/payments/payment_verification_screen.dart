@@ -67,7 +67,7 @@ class _FeeStatusTab extends ConsumerWidget {
         }
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
           children: [
             if (unpaid.isNotEmpty) ...[
               _buildSectionHeader('DUE FEES (${unpaid.length})', Colors.red),
@@ -163,7 +163,7 @@ class _ApprovalsTab extends ConsumerWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 80),
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
           itemCount: payments.length,
           itemBuilder: (context, index) {
             final pay = payments[index];

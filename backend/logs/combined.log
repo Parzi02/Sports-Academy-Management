@@ -120,3 +120,15 @@
 {"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:08:34"}
 {"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:11:01"}
 {"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:11:53"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-04-20 00:13:26"}
+{"level":"info","message":"[MOCK] OTP for 919876543211 is 1234","service":"academy-backend","timestamp":"2026-04-20 00:18:28"}
+{"level":"info","message":"Starting OCR detection on payment screenshot...","service":"academy-backend","timestamp":"2026-04-20 00:18:59"}
+{"level":"info","message":"Detected payment method: GPay","service":"academy-backend","timestamp":"2026-04-20 00:19:02"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-20 00:19:45"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:19:48"}
+{"level":"info","message":"[MOCK] OTP for 919876543211 is 1234","service":"academy-backend","timestamp":"2026-04-20 00:20:20"}
+{"level":"info","message":"[MOCK] OTP for 919876543210 is 1234","service":"academy-backend","timestamp":"2026-04-20 00:21:04"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:21:07"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:23:07"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:23:36"}
+{"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:25:19"}
