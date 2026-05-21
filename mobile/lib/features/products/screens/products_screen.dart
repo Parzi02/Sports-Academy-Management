@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/products_provider.dart';
 
@@ -24,7 +25,7 @@ class ProductsScreen extends ConsumerWidget {
             return const Center(child: Text('No products available.'));
           }
           return GridView.builder(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0).copyWith(bottom: 120),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 0.7,
@@ -34,7 +35,7 @@ class ProductsScreen extends ConsumerWidget {
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
-              return _buildProductCard(product);
+              return _buildProductCard(context, product);
             },
           );
         },
@@ -44,7 +45,7 @@ class ProductsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProductCard(product) {
+  Widget _buildProductCard(BuildContext context, product) {
     Widget imageWidget;
     if (product.imageBase64 != null && product.imageBase64!.isNotEmpty) {
       try {
@@ -61,8 +62,10 @@ class ProductsScreen extends ConsumerWidget {
       imageWidget = const Icon(Icons.shopping_bag, size: 48, color: AppColors.primary);
     }
 
-    return Container(
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () => context.push('/member/products/${product.id}'),
+      child: Container(
+        decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -117,6 +120,6 @@ class ProductsScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

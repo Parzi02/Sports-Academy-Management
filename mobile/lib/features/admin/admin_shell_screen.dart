@@ -11,7 +11,7 @@ class AdminShellScreen extends StatelessWidget {
     if (location.startsWith('/admin/members')) return 1;
     if (location.startsWith('/admin/attendance')) return 2;
     if (location.startsWith('/admin/events')) return 3;
-    if (location.startsWith('/admin/products')) return 4;
+    if (location.startsWith('/admin/orders')) return 4;
     return 0;
   }
 
@@ -21,7 +21,7 @@ class AdminShellScreen extends StatelessWidget {
       case 1: context.go('/admin/members'); break;
       case 2: context.go('/admin/attendance'); break;
       case 3: context.go('/admin/events'); break;
-      case 4: context.go('/admin/products'); break;
+      case 4: context.go('/admin/orders'); break;
     }
   }
 
@@ -54,7 +54,7 @@ class AdminShellScreen extends StatelessWidget {
                 _buildNavItem(context, activeIcon: Icons.group, inactiveIcon: Icons.group_outlined, label: 'Members', index: 1, currentIndex: currentIndex),
                 _buildNavItem(context, activeIcon: Icons.bar_chart, inactiveIcon: Icons.bar_chart_outlined, label: 'Attendance', index: 2, currentIndex: currentIndex),
                 _buildNavItem(context, activeIcon: Icons.insights, inactiveIcon: Icons.insights_outlined, label: 'Events', index: 3, currentIndex: currentIndex),
-                _buildNavItem(context, activeIcon: Icons.shopping_bag, inactiveIcon: Icons.shopping_bag_outlined, label: 'Shop', index: 4, currentIndex: currentIndex),
+                _buildNavItem(context, activeIcon: Icons.receipt_long, inactiveIcon: Icons.receipt_long_outlined, label: 'Orders', index: 4, currentIndex: currentIndex),
               ],
             ),
           ),

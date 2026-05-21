@@ -15,6 +15,7 @@ import '../../features/admin/attendance/mark_attendance_screen.dart';
 import '../../features/admin/events/create_event_screen.dart';
 import '../../features/admin/profile/admin_profile_screen.dart';
 import '../../features/admin/payments/payment_verification_screen.dart';
+import '../../features/admin/orders/screens/coach_orders_screen.dart';
 import '../../features/member/member_shell_screen.dart';
 import '../../features/member/home/member_home_screen.dart';
 import '../../features/member/attendance/member_attendance_screen.dart';
@@ -23,6 +24,8 @@ import '../../features/member/fees/fees_screen.dart';
 import '../../features/member/profile/member_profile_screen.dart';
 import '../../features/member/events/event_detail_screen.dart';
 import '../../features/products/screens/products_screen.dart';
+import '../../features/products/screens/product_detail_screen.dart';
+import '../../features/products/screens/cart_screen.dart';
 
 final appRouterProvider = Provider((ref) {
   final authState = ref.watch(authStateProvider);
@@ -90,7 +93,7 @@ final appRouterProvider = Provider((ref) {
           ),
           GoRoute(path: '/admin/payments/pending', builder: (context, state) => const PaymentVerificationScreen()),
           GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
-          GoRoute(path: '/admin/products', builder: (context, state) => const ProductsScreen()),
+          GoRoute(path: '/admin/orders', builder: (context, state) => const CoachOrdersScreen()),
         ],
       ),
 
@@ -112,7 +115,10 @@ final appRouterProvider = Provider((ref) {
           ),
           GoRoute(path: '/member/fees', builder: (context, state) => const FeesScreen()),
           GoRoute(path: '/member/profile', builder: (context, state) => const MemberProfileScreen()),
-          GoRoute(path: '/member/products', builder: (context, state) => const ProductsScreen()),
+          GoRoute(path: '/member/products', builder: (context, state) => const ProductsScreen(), routes: [
+            GoRoute(path: ':id', builder: (context, state) => ProductDetailScreen(id: state.pathParameters['id']!)),
+          ]),
+          GoRoute(path: '/member/cart', builder: (context, state) => const CartScreen()),
         ],
       ),
     ],

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../products/providers/cart_provider.dart';
 
-class MemberShellScreen extends StatelessWidget {
+class MemberShellScreen extends ConsumerWidget {
   final Widget child;
   const MemberShellScreen({super.key, required this.child});
 
@@ -26,8 +28,9 @@ class MemberShellScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _getSelectedIndex(context);
+    final location = GoRouterState.of(context).matchedLocation;
     return Scaffold(
       extendBody: true,
       body: child,
@@ -60,6 +63,45 @@ class MemberShellScreen extends StatelessWidget {
           ),
         ),
       ),
+      floatingActionButton: (ref.watch(cartProvider).isNotEmpty && location != '/member/cart')
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 0.5),
+              child: FloatingActionButton(
+                backgroundColor: AppColors.primary,
+                onPressed: () => context.push('/member/cart'),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(Icons.shopping_cart, color: Colors.white),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${ref.watch(cartProvider).length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 
