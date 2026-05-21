@@ -22,6 +22,7 @@ import '../../features/member/events/member_events_screen.dart';
 import '../../features/member/fees/fees_screen.dart';
 import '../../features/member/profile/member_profile_screen.dart';
 import '../../features/member/events/event_detail_screen.dart';
+import '../../features/products/screens/products_screen.dart';
 
 final appRouterProvider = Provider((ref) {
   final authState = ref.watch(authStateProvider);
@@ -89,6 +90,7 @@ final appRouterProvider = Provider((ref) {
           ),
           GoRoute(path: '/admin/payments/pending', builder: (context, state) => const PaymentVerificationScreen()),
           GoRoute(path: '/admin/profile', builder: (context, state) => const AdminProfileScreen()),
+          GoRoute(path: '/admin/products', builder: (context, state) => const ProductsScreen()),
         ],
       ),
 
@@ -110,6 +112,7 @@ final appRouterProvider = Provider((ref) {
           ),
           GoRoute(path: '/member/fees', builder: (context, state) => const FeesScreen()),
           GoRoute(path: '/member/profile', builder: (context, state) => const MemberProfileScreen()),
+          GoRoute(path: '/member/products', builder: (context, state) => const ProductsScreen()),
         ],
       ),
     ],

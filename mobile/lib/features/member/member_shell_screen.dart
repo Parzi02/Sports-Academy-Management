@@ -11,6 +11,7 @@ class MemberShellScreen extends StatelessWidget {
     if (location.startsWith('/member/attendance')) return 1;
     if (location.startsWith('/member/events')) return 2;
     if (location.startsWith('/member/fees')) return 3;
+    if (location.startsWith('/member/products')) return 4;
     return 0;
   }
 
@@ -20,6 +21,7 @@ class MemberShellScreen extends StatelessWidget {
       case 1: context.go('/member/attendance'); break;
       case 2: context.go('/member/events'); break;
       case 3: context.go('/member/fees'); break;
+      case 4: context.go('/member/products'); break;
     }
   }
 
@@ -52,6 +54,7 @@ class MemberShellScreen extends StatelessWidget {
                 _buildNavItem(context, activeIcon: Icons.bar_chart, inactiveIcon: Icons.bar_chart_outlined, label: 'Attendance', index: 1, currentIndex: currentIndex),
                 _buildNavItem(context, activeIcon: Icons.vignette, inactiveIcon: Icons.vignette_outlined, label: 'Events', index: 2, currentIndex: currentIndex),
                 _buildNavItem(context, activeIcon: Icons.savings, inactiveIcon: Icons.savings_outlined, label: 'Fee', index: 3, currentIndex: currentIndex),
+                _buildNavItem(context, activeIcon: Icons.shopping_bag, inactiveIcon: Icons.shopping_bag_outlined, label: 'Shop', index: 4, currentIndex: currentIndex),
               ],
             ),
           ),
@@ -62,27 +65,34 @@ class MemberShellScreen extends StatelessWidget {
 
   Widget _buildNavItem(BuildContext context, {required IconData activeIcon, required IconData inactiveIcon, required String label, required int index, required int currentIndex}) {
     final isSelected = index == currentIndex;
-    return GestureDetector(
-      onTap: () => _onItemTapped(index, context),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(isSelected ? activeIcon : inactiveIcon, color: isSelected ? AppColors.primary : AppColors.textSecondary, size: 24),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(
-              color: isSelected ? AppColors.primary : AppColors.textSecondary, 
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal
-            )),
-          ],
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index, context),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(isSelected ? activeIcon : inactiveIcon, color: isSelected ? AppColors.primary : AppColors.textSecondary, size: 24),
+              const SizedBox(height: 4),
+              Text(
+                label, 
+                style: TextStyle(
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary, 
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

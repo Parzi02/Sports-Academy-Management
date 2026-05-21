@@ -132,3 +132,11 @@
 {"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:23:07"}
 {"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:23:36"}
 {"level":"info","message":"Fetching profile for admin ID: c89606cf-b8b4-4ee4-8304-2e7ddce1bce5","service":"academy-backend","timestamp":"2026-04-20 00:25:19"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-05-21 19:36:09"}
+{"level":"info","message":"Creating products table...","service":"academy-backend","timestamp":"2026-05-21 19:36:29"}
+{"level":"info","message":"Products table created successfully.","service":"academy-backend","timestamp":"2026-05-21 19:36:29"}
+{"level":"info","message":"Seeding initial products...","service":"academy-backend","timestamp":"2026-05-21 19:36:29"}
+{"level":"info","message":"Initial products seeded successfully.","service":"academy-backend","timestamp":"2026-05-21 19:36:29"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-05-21 19:36:39"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-05-21 19:36:55"}
+{"level":"info","message":"Server running on port 3000","service":"academy-backend","timestamp":"2026-05-21 19:37:07"}

@@ -102,7 +102,7 @@ exports.markSelfAttendance = async (req, res, next) => {
         // 2. Insert or update attendance for today
         await db.query(
             `INSERT INTO attendance (member_id, batch_id, date, status, marked_by, selfie_base64) 
-             VALUES ($1, $2, CURRENT_DATE, 'present', $1, $3) 
+             VALUES ($1, $2, CURRENT_DATE, 'present', NULL, $3) 
              ON CONFLICT (member_id, batch_id, date) 
              DO UPDATE SET status = 'present', marked_at = CURRENT_TIMESTAMP, selfie_base64 = EXCLUDED.selfie_base64`,
             [req.user.id, batchId, imageBase64]
