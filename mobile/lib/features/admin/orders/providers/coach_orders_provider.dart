@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 
-final coachOrdersProvider = StateNotifierProvider<CoachOrdersNotifier, AsyncValue<List<dynamic>>>((ref) {
+final coachOrdersProvider = StateNotifierProvider.autoDispose<CoachOrdersNotifier, AsyncValue<List<dynamic>>>((ref) {
   return CoachOrdersNotifier(ref.watch(apiClientProvider));
 });
 
@@ -23,15 +23,23 @@ class CoachOrdersNotifier extends StateNotifier<AsyncValue<List<dynamic>>> {
     }
   }
 
-  Future<void> updateOrderStatus(int orderId, String newStatus) async {
+  Future<void> updateOrderStatus(int orderId, {String? status, String? deliveryStatus}) async {
     try {
-      await _apiClient.patch('/orders/$orderId/status', {'status': newStatus});
+      final data = <String, dynamic>{};
+      if (status != null) data['status'] = status;
+      if (deliveryStatus != null) data['delivery_status'] = deliveryStatus;
+      
+      await _apiClient.patch('/orders/$orderId/status', data);
+      
       // Update local state instead of full refresh for better UX
       if (state.hasValue) {
         final currentOrders = state.value!;
         final updatedOrders = currentOrders.map((order) {
           if (order['id'] == orderId) {
-            return {...order, 'status': newStatus};
+            final updatedOrder = Map<String, dynamic>.from(order);
+            if (status != null) updatedOrder['status'] = status;
+            if (deliveryStatus != null) updatedOrder['delivery_status'] = deliveryStatus;
+            return updatedOrder;
           }
           return order;
         }).toList();

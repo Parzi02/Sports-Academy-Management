@@ -9,11 +9,11 @@ class MemberShellScreen extends ConsumerWidget {
   const MemberShellScreen({super.key, required this.child});
 
   int _getSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
+    final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/member/attendance')) return 1;
     if (location.startsWith('/member/events')) return 2;
     if (location.startsWith('/member/fees')) return 3;
-    if (location.startsWith('/member/products')) return 4;
+    if (location.startsWith('/member/products') || location.startsWith('/member/cart')) return 4;
     return 0;
   }
 
@@ -30,11 +30,13 @@ class MemberShellScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _getSelectedIndex(context);
-    final location = GoRouterState.of(context).matchedLocation;
+    final location = GoRouterState.of(context).uri.path;
+    final isCartPage = location == '/member/cart';
+
     return Scaffold(
       extendBody: true,
       body: child,
-      bottomNavigationBar: SafeArea(
+      bottomNavigationBar: isCartPage ? null : SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Container(
@@ -63,7 +65,7 @@ class MemberShellScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: (ref.watch(cartProvider).isNotEmpty && location != '/member/cart')
+      floatingActionButton: (ref.watch(cartProvider).isNotEmpty && !isCartPage)
           ? Padding(
               padding: const EdgeInsets.only(bottom: 0.5),
               child: FloatingActionButton(

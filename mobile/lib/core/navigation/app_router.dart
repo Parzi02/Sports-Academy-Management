@@ -26,6 +26,7 @@ import '../../features/member/events/event_detail_screen.dart';
 import '../../features/products/screens/products_screen.dart';
 import '../../features/products/screens/product_detail_screen.dart';
 import '../../features/products/screens/cart_screen.dart';
+import '../../features/products/screens/order_upi_payment_screen.dart';
 
 final appRouterProvider = Provider((ref) {
   final authState = ref.watch(authStateProvider);
@@ -118,7 +119,19 @@ final appRouterProvider = Provider((ref) {
           GoRoute(path: '/member/products', builder: (context, state) => const ProductsScreen(), routes: [
             GoRoute(path: ':id', builder: (context, state) => ProductDetailScreen(id: state.pathParameters['id']!)),
           ]),
-          GoRoute(path: '/member/cart', builder: (context, state) => const CartScreen()),
+          GoRoute(path: '/member/cart', builder: (context, state) => const CartScreen(), routes: [
+            GoRoute(
+              path: 'payment',
+              builder: (context, state) {
+                final extra = state.extra as Map<String, dynamic>;
+                return OrderUpiPaymentScreen(
+                  totalAmount: extra['totalAmount'] as double,
+                  coachUpiId: extra['coachUpiId'] as String,
+                  coachName: extra['coachName'] as String,
+                );
+              },
+            ),
+          ]),
         ],
       ),
     ],

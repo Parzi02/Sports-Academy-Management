@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/toast_utils.dart';
+import '../../member/providers/member_providers.dart';
 import '../providers/cart_provider.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
@@ -15,39 +16,35 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  bool isPlacingOrder = false;
+  bool isProcessing = false;
 
-  Future<void> _placeOrder() async {
+  Future<void> _proceedToPayment() async {
     final cartItems = ref.read(cartProvider);
     if (cartItems.isEmpty) return;
 
     setState(() {
-      isPlacingOrder = true;
+      isProcessing = true;
     });
 
     try {
-      final apiClient = ref.read(apiClientProvider);
-      final itemsData = cartItems.map((item) => {
-        'productId': item.product.id,
-        'quantity': item.quantity,
-        'price': item.product.price,
-      }).toList();
+      final dashboardData = await ref.read(memberDashboardProvider.future);
+      
+      if (dashboardData.coachUpiId == null || dashboardData.coachUpiId!.isEmpty) {
+        if (mounted) ToastUtils.showTopToast(context, 'Your assigned coach has no UPI ID set. Please contact the academy.');
+        return;
+      }
 
       final totalAmount = ref.read(cartProvider.notifier).totalPrice;
 
-      final response = await apiClient.post('/orders', {
-        'items': itemsData,
-        'totalAmount': totalAmount,
-      });
-
-      if (response.statusCode == 201) {
-        ref.read(cartProvider.notifier).clearCart();
-        if (mounted) {
-          ToastUtils.showTopToast(context, 'Order placed successfully!');
-          context.pop();
-        }
-      } else {
-        throw Exception('Failed to place order');
+      if (mounted) {
+        context.push(
+          '/member/cart/payment',
+          extra: {
+            'totalAmount': totalAmount,
+            'coachUpiId': dashboardData.coachUpiId,
+            'coachName': dashboardData.coachName,
+          },
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -56,7 +53,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          isPlacingOrder = false;
+          isProcessing = false;
         });
       }
     }
@@ -194,7 +191,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: isPlacingOrder ? null : _placeOrder,
+                            onPressed: isProcessing ? null : _proceedToPayment,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -202,14 +199,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: isPlacingOrder
+                            child: isProcessing
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                                   )
                                 : const Text(
-                                    'Place Order',
+                                    'Proceed to Payment',
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                                   ),
                           ),
