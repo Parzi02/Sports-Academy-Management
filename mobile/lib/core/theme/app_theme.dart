@@ -21,8 +21,8 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: const StadiumBorder(), // Pill shape
         minimumSize: const Size(double.infinity, 52),
+        shape: const StadiumBorder(), // Pill shape
         textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),

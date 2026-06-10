@@ -1,6 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
-const db = require('../config/db');
+const prisma = require('../config/prisma');
 const logger = require('../config/logger');
 
 exports.sendOtp = async (req, res, next) => {
@@ -42,12 +42,19 @@ exports.verifyOtp = async (req, res, next) => {
     }
 
     // 2. Fetch User from DB (Check coaches first, then members)
-    let userRes = await db.query('SELECT *, \'admin\' as role FROM coaches WHERE RIGHT(phone, 10) = RIGHT($1, 10)', [phone]);
-    let user = userRes.rows[0];
+    const phoneSuffix = phone.slice(-10);
 
-    if (!user) {
-      userRes = await db.query('SELECT *, \'member\' as role FROM members WHERE RIGHT(phone, 10) = RIGHT($1, 10)', [phone]);
-      user = userRes.rows[0];
+    let user = await prisma.coaches.findFirst({
+      where: { phone: { endsWith: phoneSuffix } }
+    });
+
+    if (user) {
+      user.role = 'admin';
+    } else {
+      user = await prisma.members.findFirst({
+        where: { phone: { endsWith: phoneSuffix } }
+      });
+      if (user) user.role = 'member';
     }
 
     if (!user) {

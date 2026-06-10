@@ -65,7 +65,7 @@ class MemberShellScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: (ref.watch(cartProvider).isNotEmpty && !isCartPage)
+      floatingActionButton: (ref.watch(cartProvider).isNotEmpty && !isCartPage && location != '/member/cart/payment')
           ? Padding(
               padding: const EdgeInsets.only(bottom: 0.5),
               child: FloatingActionButton(

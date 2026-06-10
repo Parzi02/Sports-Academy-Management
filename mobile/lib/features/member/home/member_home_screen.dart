@@ -300,26 +300,29 @@ class _ScheduleCard extends StatelessWidget {
           Text(schedule.title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           const Spacer(),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.person_outline, color: Colors.white70, size: 16),
               const SizedBox(width: 8),
-              Text(schedule.coach, style: const TextStyle(color: Colors.white, fontSize: 14)),
+              Expanded(child: Text(schedule.coach, style: const TextStyle(color: Colors.white, fontSize: 14))),
             ],
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.access_time, color: Colors.white70, size: 16),
               const SizedBox(width: 8),
-              Text('${schedule.startTime} - ${schedule.endTime}', style: const TextStyle(color: Colors.white, fontSize: 14)),
+              Expanded(child: Text('${schedule.startTime} - ${schedule.endTime}', style: const TextStyle(color: Colors.white, fontSize: 14))),
             ],
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.location_on_outlined, color: Colors.white70, size: 16),
               const SizedBox(width: 8),
-              Text(schedule.venue, style: const TextStyle(color: Colors.white, fontSize: 14)),
+              Expanded(child: Text(schedule.venue, style: const TextStyle(color: Colors.white, fontSize: 14))),
             ],
           ),
         ],

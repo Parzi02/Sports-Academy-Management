@@ -1,72 +1,80 @@
-const db = require('../config/db');
+const prisma = require('../config/prisma');
 const logger = require('../config/logger');
 
 // Member Dashboard
 exports.getDashboard = async (req, res, next) => {
     try {
-        // Attendance %
-        const attendanceCountRes = await db.query(
-            'SELECT COUNT(*) FROM attendance WHERE member_id = $1 AND status = $2',
-            [req.user.id, 'present']
-        );
-        const totalAttendanceRes = await db.query(
-            'SELECT COUNT(*) FROM attendance WHERE member_id = $1',
-            [req.user.id]
-        );
-        const total = parseInt(totalAttendanceRes.rows[0].count);
-        const present = parseInt(attendanceCountRes.rows[0].count);
-        const attendancePercentage = total > 0 ? (present / total) * 100 : 0;
+        const totalSessions = await prisma.attendance.count({
+            where: { member_id: req.user.id }
+        });
+        
+        const attendedSessions = await prisma.attendance.count({
+            where: { member_id: req.user.id, status: 'present' }
+        });
+        
+        const attendancePercentage = totalSessions > 0 ? (attendedSessions / totalSessions) * 100 : 0;
 
-        // Enrollment & Batch Info
-        const enrollmentRes = await db.query(
-            `SELECT e.payment_status, e.membership_type, e.end_date as due_date, 
-                    b.name as batch_name, b.sport, b.start_time, b.end_time, 
-                    c.name as coach_name, c.upi_id as coach_upi_id
-             FROM enrollments e 
-             JOIN batches b ON e.batch_id = b.id 
-             LEFT JOIN coaches c ON b.coach_id = c.id
-             WHERE e.member_id = $1`, [req.user.id]
-        );
+        const enrollment = await prisma.enrollments.findFirst({
+            where: { member_id: req.user.id },
+            include: {
+                batches: {
+                    include: {
+                        coaches: true
+                    }
+                }
+            }
+        });
         
-        const enrollment = enrollmentRes.rows[0] || {};
-        
-        // Today's Schedule (Assigned Batch)
-        const todaySchedule = enrollment.batch_name ? [{
-            title: enrollment.batch_name,
-            start_time: enrollment.start_time,
-            end_time: enrollment.end_time,
-            coach: enrollment.coach_name || 'Assigned',
+        const batchName = enrollment?.batches?.name;
+        const sport = enrollment?.batches?.sport;
+        const startTime = enrollment?.batches?.start_time;
+        const endTime = enrollment?.batches?.end_time;
+        const coachName = enrollment?.batches?.coaches?.name;
+        const coachUpiId = enrollment?.batches?.coaches?.upi_id;
+
+        const formatTime = (dateObj) => {
+            if (!dateObj) return '';
+            return dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+        };
+
+        const todaySchedule = batchName ? [{
+            title: batchName,
+            start_time: formatTime(startTime),
+            end_time: formatTime(endTime),
+            coach: coachName || 'Assigned',
             venue: 'Academy Training Ground'
         }] : [];
 
-        // Check if attendance is already marked today
-        const todayAttendanceRes = await db.query(
-            'SELECT COUNT(*) FROM attendance WHERE member_id = $1 AND date = CURRENT_DATE',
-            [req.user.id]
-        );
-        const isAttendanceMarkedToday = parseInt(todayAttendanceRes.rows[0].count) > 0;
+        const now = new Date();
+        const todayUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
-        // Check for pending payments (Wait for approval)
-        const pendingPaymentRes = await db.query(
-            'SELECT COUNT(*) FROM payments WHERE member_id = $1 AND status = $2',
-            [req.user.id, 'pending']
-        );
-        const isPaymentPending = parseInt(pendingPaymentRes.rows[0].count) > 0;
+        const todayAttendance = await prisma.attendance.count({
+            where: {
+                member_id: req.user.id,
+                date: todayUtc
+            }
+        });
+        const isAttendanceMarkedToday = todayAttendance > 0;
+
+        const pendingPayment = await prisma.payments.count({
+            where: { member_id: req.user.id, status: 'pending' }
+        });
+        const isPaymentPending = pendingPayment > 0;
 
         res.json({
             isAttendanceMarkedToday: isAttendanceMarkedToday,
             isPaymentPending: isPaymentPending,
             attendancePercentage: attendancePercentage.toFixed(2),
-            attendedSessions: present,
-            totalSessions: total,
-            feeStatus: enrollment.payment_status || 'due',
-            membershipType: enrollment.membership_type || 'standard',
-            dueDate: enrollment.due_date,
-            batchName: enrollment.batch_name || 'No Batch',
-            sport: enrollment.sport || 'Academy Training',
-            coachName: enrollment.coach_name || 'Assigned',
-            coachUpiId: enrollment.coach_upi_id || null,
-            batchTime: enrollment.start_time ? `${enrollment.start_time} - ${enrollment.end_time}` : 'TBD',
+            attendedSessions: attendedSessions,
+            totalSessions: totalSessions,
+            feeStatus: enrollment?.payment_status || 'due',
+            membershipType: enrollment?.membership_type || 'standard',
+            dueDate: enrollment?.end_date,
+            batchName: batchName || 'No Batch',
+            sport: sport || 'Academy Training',
+            coachName: coachName || 'Assigned',
+            coachUpiId: coachUpiId || null,
+            batchTime: startTime ? `${formatTime(startTime)} - ${formatTime(endTime)}` : 'TBD',
             todaySchedule: todaySchedule
         });
     } catch (error) {
@@ -85,28 +93,41 @@ exports.markSelfAttendance = async (req, res, next) => {
     }
 
     try {
-        // 1. Get the member's active batch
-        const enrollmentRes = await db.query(
-            'SELECT batch_id FROM enrollments WHERE member_id = $1 LIMIT 1',
-            [req.user.id]
-        );
+        const enrollment = await prisma.enrollments.findFirst({
+            where: { member_id: req.user.id },
+            select: { batch_id: true }
+        });
 
-        if (enrollmentRes.rows.length === 0) {
+        if (!enrollment) {
             const error = new Error('No active enrollment found to mark attendance');
             error.statusCode = 404;
             return next(error);
         }
 
-        const batchId = enrollmentRes.rows[0].batch_id;
+        const now = new Date();
+        const todayUtc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
-        // 2. Insert or update attendance for today
-        await db.query(
-            `INSERT INTO attendance (member_id, batch_id, date, status, marked_by, selfie_base64) 
-             VALUES ($1, $2, CURRENT_DATE, 'present', NULL, $3) 
-             ON CONFLICT (member_id, batch_id, date) 
-             DO UPDATE SET status = 'present', marked_at = CURRENT_TIMESTAMP, selfie_base64 = EXCLUDED.selfie_base64`,
-            [req.user.id, batchId, imageBase64]
-        );
+        await prisma.attendance.upsert({
+            where: {
+                member_id_batch_id_date: {
+                    member_id: req.user.id,
+                    batch_id: enrollment.batch_id,
+                    date: todayUtc
+                }
+            },
+            update: {
+                status: 'present',
+                marked_at: new Date(),
+                selfie_base64: imageBase64
+            },
+            create: {
+                member_id: req.user.id,
+                batch_id: enrollment.batch_id,
+                date: todayUtc,
+                status: 'present',
+                selfie_base64: imageBase64
+            }
+        });
 
         res.json({ message: 'Attendance marked successfully' });
     } catch (error) {
@@ -117,11 +138,15 @@ exports.markSelfAttendance = async (req, res, next) => {
 // Attendance Logs
 exports.getAttendanceLogs = async (req, res, next) => {
     try {
-        const result = await db.query(
-            "SELECT TO_CHAR(date, 'YYYY-MM-DD') as date, status FROM attendance WHERE member_id = $1 ORDER BY date DESC",
-            [req.user.id]
-        );
-        res.json(result.rows);
+        const logs = await prisma.attendance.findMany({
+            where: { member_id: req.user.id },
+            orderBy: { date: 'desc' },
+            select: { date: true, status: true }
+        });
+        res.json(logs.map(l => ({
+            date: l.date.toISOString().split('T')[0],
+            status: l.status
+        })));
     } catch (error) {
         next(error);
     }
@@ -130,11 +155,15 @@ exports.getAttendanceLogs = async (req, res, next) => {
 // Events
 exports.getEvents = async (req, res, next) => {
     try {
-        const result = await db.query(
-            "SELECT id, title, sport_category, event_category, TO_CHAR(date, 'YYYY-MM-DD') as date, venue, status FROM events WHERE branch_id = $1 ORDER BY date DESC",
-            [req.branchId]
-        );
-        res.json(result.rows);
+        const events = await prisma.events.findMany({
+            where: { branch_id: req.branchId },
+            orderBy: { date: 'desc' },
+            select: { id: true, title: true, sport_category: true, event_category: true, date: true, venue: true, status: true }
+        });
+        res.json(events.map(e => ({
+            ...e,
+            date: e.date.toISOString().split('T')[0]
+        })));
     } catch (error) {
         next(error);
     }
@@ -143,16 +172,17 @@ exports.getEvents = async (req, res, next) => {
 exports.toggleFavourite = async (req, res, next) => {
     const { eventId } = req.params;
     try {
-        const check = await db.query(
-            'SELECT id FROM event_favourites WHERE member_id = $1 AND event_id = $2',
-            [req.user.id, eventId]
-        );
+        const check = await prisma.event_favourites.findFirst({
+            where: { member_id: req.user.id, event_id: eventId }
+        });
 
-        if (check.rows.length > 0) {
-            await db.query('DELETE FROM event_favourites WHERE id = $1', [check.rows[0].id]);
+        if (check) {
+            await prisma.event_favourites.delete({ where: { id: check.id } });
             res.json({ isFavourite: false });
         } else {
-            await db.query('INSERT INTO event_favourites (member_id, event_id) VALUES ($1, $2)', [req.user.id, eventId]);
+            await prisma.event_favourites.create({
+                data: { member_id: req.user.id, event_id: eventId }
+            });
             res.json({ isFavourite: true });
         }
     } catch (error) {
@@ -164,25 +194,24 @@ exports.toggleFavourite = async (req, res, next) => {
 exports.recordPayment = async (req, res, next) => {
     const { amount, paymentMethod, upiTransactionId } = req.body;
     try {
-        await db.query('BEGIN');
-        
-        // 1. Record Payment
-        await db.query(
-            `INSERT INTO payments (member_id, amount, payment_method, upi_transaction_id, status) 
-             VALUES ($1, $2, $3, $4, $5)`,
-            [req.user.id, amount, paymentMethod, upiTransactionId, 'success']
-        );
+        await prisma.$transaction(async (tx) => {
+            await tx.payments.create({
+                data: {
+                    member_id: req.user.id,
+                    amount: amount,
+                    payment_method: paymentMethod,
+                    utr_number: upiTransactionId,
+                    status: 'success'
+                }
+            });
 
-        // 2. Update Enrollment Status
-        await db.query(
-            "UPDATE enrollments SET payment_status = 'paid' WHERE member_id = $1",
-            [req.user.id]
-        );
-
-        await db.query('COMMIT');
+            await tx.enrollments.updateMany({
+                where: { member_id: req.user.id },
+                data: { payment_status: 'paid' }
+            });
+        });
         res.json({ message: 'Payment recorded successfully' });
     } catch (error) {
-        await db.query('ROLLBACK');
         next(error);
     }
 };
@@ -190,22 +219,40 @@ exports.recordPayment = async (req, res, next) => {
 // Profile
 exports.getProfile = async (req, res, next) => {
     try {
-        const query = `
-            SELECT u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
-                   e.start_date as date_of_joining, b.sport, c.name as coach_name
-            FROM members u
-            LEFT JOIN enrollments e ON u.id = e.member_id
-            LEFT JOIN batches b ON e.batch_id = b.id
-            LEFT JOIN coaches c ON b.coach_id = c.id
-            WHERE u.id = $1
-        `;
-        const result = await db.query(query, [req.user.id]);
-        if (result.rows.length === 0) {
+        const member = await prisma.members.findUnique({
+            where: { id: req.user.id },
+            include: {
+                enrollments: {
+                    include: {
+                        batches: {
+                            include: { coaches: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!member) {
             const error = new Error('Profile not found');
             error.statusCode = 404;
             throw error;
         }
-        res.json(result.rows[0]);
+
+        const enrollment = member.enrollments[0];
+        
+        res.json({
+            name: member.name,
+            phone: member.phone,
+            email: member.email,
+            dob: member.dob,
+            gender: member.gender,
+            address: member.address,
+            member_id: member.member_id,
+            profile_photo_base64: member.profile_photo_base64,
+            date_of_joining: enrollment?.start_date,
+            sport: enrollment?.batches?.sport,
+            coach_name: enrollment?.batches?.coaches?.name
+        });
     } catch (error) {
         next(error);
     }
@@ -215,29 +262,38 @@ exports.getProfile = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
     const { name, phone, address, profilePhotoBase64 } = req.body;
     try {
-        const updateQuery = `
-            UPDATE members 
-            SET name = $1,
-                phone = $2,
-                address = $3,
-                profile_photo_base64 = $4
-            WHERE id = $5
-            RETURNING *
-        `;
-        await db.query(updateQuery, [name, phone, address, profilePhotoBase64, req.user.id]);
-        
-        // Return updated profile
-        const profileQuery = `
-            SELECT u.name, u.phone, u.email, u.dob, u.gender, u.address, u.member_id, u.profile_photo_base64,
-                   e.start_date as date_of_joining, b.sport, c.name as coach_name
-            FROM members u
-            LEFT JOIN enrollments e ON u.id = e.member_id
-            LEFT JOIN batches b ON e.batch_id = b.id
-            LEFT JOIN coaches c ON b.coach_id = c.id
-            WHERE u.id = $1
-        `;
-        const result = await db.query(profileQuery, [req.user.id]);
-        res.json(result.rows[0]);
+        const member = await prisma.members.update({
+            where: { id: req.user.id },
+            data: {
+                name,
+                phone,
+                address,
+                profile_photo_base64: profilePhotoBase64
+            },
+            include: {
+                enrollments: {
+                    include: {
+                        batches: { include: { coaches: true } }
+                    }
+                }
+            }
+        });
+
+        const enrollment = member.enrollments[0];
+
+        res.json({
+            name: member.name,
+            phone: member.phone,
+            email: member.email,
+            dob: member.dob,
+            gender: member.gender,
+            address: member.address,
+            member_id: member.member_id,
+            profile_photo_base64: member.profile_photo_base64,
+            date_of_joining: enrollment?.start_date,
+            sport: enrollment?.batches?.sport,
+            coach_name: enrollment?.batches?.coaches?.name
+        });
     } catch (error) {
         next(error);
     }

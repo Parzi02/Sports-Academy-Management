@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model attendance {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  member_id        String             @db.Uuid
+  batch_id         String             @db.Uuid
+  date             DateTime           @db.Date
+  status           attendance_status? @default(pending)
+  marked_by        String?            @db.Uuid
+  marked_at        DateTime?          @default(now()) @db.Timestamp(6)
+  selfie_base64    String?
+  batches          batches            @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_old_backup users_old_backup?  @relation(fields: [marked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members          members            @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([member_id, batch_id, date], map: "unique_attendance")
+}
+
+model batches {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id   String        @db.Uuid
+  name        String        @db.VarChar(50)
+  sport       String?       @db.VarChar(50)
+  coach_id    String?       @db.Uuid
+  start_time  DateTime?     @db.Time(6)
+  end_time    DateTime?     @db.Time(6)
+  capacity    Int?
+  attendance  attendance[]
+  branches    branches      @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coaches     coaches?      @relation(fields: [coach_id], references: [id], onUpdate: NoAction)
+  enrollments enrollments[]
+}
+
+model branches {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String             @db.VarChar(100)
+  city             String?            @db.VarChar(100)
+  contact_phone    String?            @db.VarChar(15)
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  batches          batches[]
+  coaches          coaches[]
+  events           events[]
+  members          members[]
+  users_old_backup users_old_backup[]
+}
+
+model coaches {
+  id                   String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id            String?    @db.Uuid
+  phone                String     @unique @db.VarChar(15)
+  name                 String     @db.VarChar(100)
+  email                String?    @db.VarChar(150)
+  address              String?
+  profile_photo_base64 String?
+  upi_id               String?    @db.VarChar(100)
+  created_at           DateTime?  @default(now()) @db.Timestamp(6)
+  batches              batches[]
+  branches             branches?  @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  events               events[]
+  members              members[]
+  orders               orders[]
+  payments             payments[]
+}
+
+model enrollments {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  member_id       String     @db.Uuid
+  batch_id        String     @db.Uuid
+  membership_type String?    @db.VarChar(50)
+  start_date      DateTime?  @db.Date
+  end_date        DateTime?  @db.Date
+  payment_status  String?    @default("due") @db.VarChar(20)
+  batches         batches    @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members         members    @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  payments        payments[]
+}
+
+model event_favourites {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  member_id  String    @db.Uuid
+  event_id   String    @db.Uuid
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  events     events    @relation(fields: [event_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members    members   @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([member_id, event_id])
+}
+
+model events {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id        String             @db.Uuid
+  title            String             @db.VarChar(200)
+  description      String?
+  sport_category   String?            @db.VarChar(50)
+  event_category   String?            @db.VarChar(50)
+  date             DateTime           @db.Date
+  start_time       DateTime?          @db.Time(6)
+  end_time         DateTime?          @db.Time(6)
+  venue            String?            @db.VarChar(100)
+  image_base64     String?
+  status           event_status?      @default(upcoming)
+  created_by       String?            @db.Uuid
+  event_favourites event_favourites[]
+  branches         branches           @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coaches          coaches?           @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+}
+
+model members {
+  id                   String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id            String?            @db.Uuid
+  phone                String             @unique @db.VarChar(15)
+  name                 String             @db.VarChar(100)
+  email                String?            @db.VarChar(150)
+  dob                  DateTime?          @db.Date
+  gender               String?            @db.VarChar(20)
+  address              String?
+  profile_photo_base64 String?
+  member_id            String?            @unique @db.VarChar(20)
+  coach_id             String?            @db.Uuid
+  created_at           DateTime?          @default(now()) @db.Timestamp(6)
+  attendance           attendance[]
+  enrollments          enrollments[]
+  event_favourites     event_favourites[]
+  branches             branches?          @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  coaches              coaches?           @relation(fields: [coach_id], references: [id], onUpdate: NoAction)
+  orders               orders[]
+  payments             payments[]
+}
+
+model orders {
+  id              Int       @id @default(autoincrement())
+  member_id       String?   @db.Uuid
+  coach_id        String?   @db.Uuid
+  total_amount    Decimal   @db.Decimal(10, 2)
+  status          String?   @default("pending") @db.VarChar(50)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+  items           Json?     @default("[]")
+  utr_number      String?   @db.VarChar(50)
+  payment_proof   String?
+  delivery_status String?   @default("pending") @db.VarChar(50)
+  coaches         coaches?  @relation(fields: [coach_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members         members?  @relation(fields: [member_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model payments {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  member_id         String               @db.Uuid
+  enrollment_id     String?              @db.Uuid
+  amount            Decimal              @db.Decimal(10, 2)
+  payment_method    payment_method_type?
+  paid_at           DateTime?            @default(now()) @db.Timestamp(6)
+  recorded_by       String?              @db.Uuid
+  status            txn_status?          @default(pending)
+  plan_type         String?              @db.VarChar(50)
+  utr_number        String?              @unique @db.VarChar(12)
+  screenshot_base64 String?
+  created_at        DateTime?            @default(now()) @db.Timestamp(6)
+  enrollments       enrollments?         @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members           members              @relation(fields: [member_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  coaches           coaches?             @relation(fields: [recorded_by], references: [id], onUpdate: NoAction)
+}
+
+model products {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(255)
+  description  String?
+  price        Decimal   @db.Decimal(10, 2)
+  image_base64 String?
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model users_old_backup {
+  id                     String             @id(map: "users_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branch_id              String             @db.Uuid
+  phone                  String             @unique(map: "users_phone_key") @db.VarChar(15)
+  name                   String             @db.VarChar(100)
+  email                  String?            @db.VarChar(150)
+  dob                    DateTime?          @db.Date
+  gender                 String?            @db.VarChar(20)
+  address                String?
+  role                   user_role
+  profile_photo_base64   String?
+  member_id              String?            @db.VarChar(20)
+  created_at             DateTime?          @default(now()) @db.Timestamp(6)
+  upi_id                 String?            @db.VarChar(100)
+  coach_id               String?            @db.Uuid
+  attendance             attendance[]
+  branches               branches           @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "users_branch_id_fkey")
+  users_old_backup       users_old_backup?  @relation("users_old_backupTousers_old_backup", fields: [coach_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "users_coach_id_fkey")
+  other_users_old_backup users_old_backup[] @relation("users_old_backupTousers_old_backup")
+}
+
+enum attendance_status {
+  present
+  absent
+  holiday
+  pending
+}
+
+enum event_status {
+  upcoming
+  ongoing
+  past
+}
+
+enum payment_method_type {
+  cash
+  upi
+  GPay
+  PhonePe
+  Paytm
+  Amazon_Pay @map("Amazon Pay")
+}
+
+enum txn_status {
+  success
+  failed
+  pending
+}
+
+enum user_role {
+  member
+  admin
+}

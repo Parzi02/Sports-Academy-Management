@@ -50,7 +50,7 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
 
     _controller = CameraController(
       _cameras[index],
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
       enableAudio: false,
     );
 
@@ -92,14 +92,16 @@ class _CustomCameraScreenState extends State<CustomCameraScreen> {
       String dateText = DateFormat('yyyy-MM-dd').format(DateTime.now());
       String timeText = DateFormat('HH:mm:ss').format(DateTime.now());
 
+      final double fontSize = image.width * 0.05;
+
       final textSpan = TextSpan(
         text: '$dateText\n$timeText',
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 64, // Large font for camera resolution
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
           height: 1.2,
-          shadows: [
+          shadows: const [
             Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(4, 4)),
             Shadow(color: Colors.black87, blurRadius: 2, offset: Offset(2, 2)),
           ],

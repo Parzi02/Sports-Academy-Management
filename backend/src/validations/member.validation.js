@@ -23,8 +23,25 @@ const updateProfile = {
   }),
 };
 
+const submitPayment = {
+  body: Joi.object().keys({
+    amount: Joi.number().required(),
+    planType: Joi.string().required(),
+    utrNumber: Joi.string().required(),
+    screenshotBase64: Joi.string().required(),
+  }),
+};
+
+const toggleFavourite = {
+  params: Joi.object().keys({
+    eventId: Joi.string().uuid().required()
+  })
+};
+
 module.exports = {
   markSelfAttendance,
   recordPayment,
   updateProfile,
+  submitPayment,
+  toggleFavourite
 };

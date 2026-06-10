@@ -43,8 +43,51 @@ const createEvent = {
   }),
 };
 
+const updateProfile = {
+  body: Joi.object().keys({
+    name: Joi.string().required(),
+    email: Joi.string().email().allow('', null),
+    phone: Joi.string().required(),
+    address: Joi.string().allow('', null),
+    profile_photo_base64: Joi.string().allow('', null),
+  }),
+};
+
+const recordCashPayment = {
+  params: Joi.object().keys({
+    id: Joi.string().uuid().required()
+  }),
+  body: Joi.object().keys({
+    amount: Joi.number().required(),
+    planType: Joi.string().required()
+  })
+};
+
+const updateMemberEnrollment = {
+  params: Joi.object().keys({
+    id: Joi.string().uuid().required()
+  }),
+  body: Joi.object().keys({
+    batch_id: Joi.string().uuid().allow('', null),
+    membership_type: Joi.string().allow('', null)
+  }).min(1)
+};
+
+const updatePaymentStatus = {
+  params: Joi.object().keys({
+    id: Joi.string().uuid().required()
+  }),
+  body: Joi.object().keys({
+    status: Joi.string().valid('success', 'failed').required()
+  })
+};
+
 module.exports = {
   addMember,
   markAttendance,
   createEvent,
+  updateProfile,
+  recordCashPayment,
+  updateMemberEnrollment,
+  updatePaymentStatus
 };
