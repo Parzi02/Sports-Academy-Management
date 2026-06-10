@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -109,6 +110,13 @@ class MemberProfileScreen extends ConsumerWidget {
               ),
 
               const SizedBox(height: 32),
+              ListTile(
+                onTap: () => GoRouter.of(context).push('/member/orders'),
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.shopping_bag_outlined),
+                title: const Text('My Orders'),
+                trailing: const Icon(Icons.chevron_right),
+              ),
               ListTile(
                 onTap: () {},
                 contentPadding: EdgeInsets.zero,

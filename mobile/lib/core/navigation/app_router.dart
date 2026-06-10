@@ -27,6 +27,7 @@ import '../../features/products/screens/products_screen.dart';
 import '../../features/products/screens/product_detail_screen.dart';
 import '../../features/products/screens/cart_screen.dart';
 import '../../features/products/screens/order_upi_payment_screen.dart';
+import '../../features/member/orders/member_orders_screen.dart';
 
 final appRouterProvider = Provider((ref) {
   final authState = ref.watch(authStateProvider);
@@ -116,6 +117,7 @@ final appRouterProvider = Provider((ref) {
           ),
           GoRoute(path: '/member/fees', builder: (context, state) => const FeesScreen()),
           GoRoute(path: '/member/profile', builder: (context, state) => const MemberProfileScreen()),
+          GoRoute(path: '/member/orders', builder: (context, state) => const MemberOrdersScreen()),
           GoRoute(path: '/member/products', builder: (context, state) => const ProductsScreen(), routes: [
             GoRoute(path: ':id', builder: (context, state) => ProductDetailScreen(id: state.pathParameters['id']!)),
           ]),

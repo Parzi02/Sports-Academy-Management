@@ -114,3 +114,26 @@ exports.updateOrderStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getMemberOrders = async (req, res, next) => {
+  try {
+    const memberId = req.user.id;
+    
+    const orders = await prisma.orders.findMany({
+      where: { member_id: memberId },
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        total_amount: true,
+        status: true,
+        delivery_status: true,
+        items: true,
+        created_at: true,
+      }
+    });
+
+    res.json(orders);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -8,6 +8,7 @@ const validate = require('../middleware/validator');
 
 router.post('/', auth, validate(ordersValidation.createOrder), ordersController.createOrder);
 router.get('/coach', auth, ordersController.getCoachOrders);
+router.get('/member', auth, ordersController.getMemberOrders);
 router.patch('/:id/status', auth, validate(ordersValidation.updateOrderStatus), ordersController.updateOrderStatus);
 
 module.exports = router;
