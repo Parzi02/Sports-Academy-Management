@@ -220,6 +220,7 @@ class AdminBatch {
   final String sport;
   final String startTime;
   final String endTime;
+  final String? coachId;
 
   AdminBatch({
     required this.id,
@@ -227,6 +228,7 @@ class AdminBatch {
     required this.sport,
     required this.startTime,
     required this.endTime,
+    this.coachId,
   });
 
   factory AdminBatch.fromJson(Map<String, dynamic> json) {
@@ -236,6 +238,7 @@ class AdminBatch {
       sport: json['sport']?.toString() ?? '',
       startTime: json['start_time']?.toString() ?? '',
       endTime: json['end_time']?.toString() ?? '',
+      coachId: json['coach_id']?.toString(),
     );
   }
 }

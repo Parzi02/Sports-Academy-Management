@@ -317,7 +317,10 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
                   value: _selectedCoachId,
                   decoration: const InputDecoration(labelText: 'Select Main Coach *'),
                   items: coaches.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
-                  onChanged: (val) => setState(() => _selectedCoachId = val),
+                  onChanged: (val) => setState(() {
+                    _selectedCoachId = val;
+                    _selectedBatchId = null;
+                  }),
                   isExpanded: true,
                 ),
                 loading: () => const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator())),
@@ -326,13 +329,19 @@ class _AddMemberSheetState extends ConsumerState<_AddMemberSheet> {
               const SizedBox(height: 16),
               
               batchesState.when(
-                data: (batches) => DropdownButtonFormField<String>(
-                  value: _selectedBatchId,
-                  decoration: const InputDecoration(labelText: 'Select Batch'),
-                  items: batches.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.name} (${b.sport})'))).toList(),
-                  onChanged: (val) => setState(() => _selectedBatchId = val),
-                  isExpanded: true,
-                ),
+                data: (batches) {
+                  final filteredBatches = _selectedCoachId == null
+                      ? batches
+                      : batches.where((b) => b.coachId == _selectedCoachId).toList();
+
+                  return DropdownButtonFormField<String>(
+                    value: _selectedBatchId,
+                    decoration: const InputDecoration(labelText: 'Select Batch'),
+                    items: filteredBatches.map((b) => DropdownMenuItem(value: b.id, child: Text('${b.name} (${b.sport})'))).toList(),
+                    onChanged: (val) => setState(() => _selectedBatchId = val),
+                    isExpanded: true,
+                  );
+                },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, st) => Text('Error loading batches: $e'),
               ),

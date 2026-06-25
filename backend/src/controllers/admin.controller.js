@@ -295,12 +295,10 @@ exports.createEvent = async (req, res, next) => {
 exports.getBatches = async (req, res, next) => {
     try {
         const result = await db.query(
-            `SELECT DISTINCT b.id, b.name, b.sport, b.start_time, b.end_time 
+            `SELECT b.id, b.name, b.sport, b.start_time, b.end_time, b.coach_id 
              FROM batches b 
-             JOIN enrollments e ON b.id = e.batch_id 
-             JOIN members m ON e.member_id = m.id 
-             WHERE b.branch_id = $1 AND m.coach_id = $2`,
-            [req.branchId, req.user.id]
+             WHERE b.branch_id = $1`,
+            [req.branchId]
         );
         res.json(result.rows);
     } catch (error) {

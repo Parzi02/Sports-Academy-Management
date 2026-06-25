@@ -12,6 +12,12 @@ class PaymentVerificationScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pendingState = ref.watch(adminPendingPaymentsProvider);
+    final int pendingCount = pendingState.maybeWhen(
+      data: (payments) => payments.length,
+      orElse: () => 0,
+    );
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -20,13 +26,31 @@ class PaymentVerificationScreen extends ConsumerWidget {
           title: const Text('Fees Pending Page'),
           backgroundColor: Colors.white,
           elevation: 0,
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.primary,
             tabs: [
-              Tab(text: 'Fee Status'),
-              Tab(text: 'Approvals'),
+              const Tab(text: 'Fee Status'),
+              Tab(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Approvals'),
+                    if (pendingCount > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
           actions: [
