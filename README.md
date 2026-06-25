@@ -130,8 +130,7 @@ The repository includes:
 
 ## Demo
 
-https://github.com/user-attachments/assets/16e3f1b9-5f26-4b3f-a2ad-8f6342be0fbc
-
+https://github.com/user-attachments/assets/c70babd1-8c90-4af0-b275-78a2a37f4e0a
 
 
 ## Future Enhancements
